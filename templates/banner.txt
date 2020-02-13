@@ -1,0 +1,7 @@
+           _     _   
+  ___ _ __| |__ | |_ 
+ / __| '__| '_ \| __|
+| (__| |  | |_) | |_ 
+ \___|_|  |_.__/ \__|
+                         
+(C)loud (R)un (B)ootstrap (T)ool is designed to simplify initialization of applications using Cloud Run.

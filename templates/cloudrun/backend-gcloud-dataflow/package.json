@@ -1,0 +1,16 @@
+{
+    "name": "backend-gcloud-dataflow",
+    "version": "0.1.0",
+    "description": "Display a list of dataflow jobs that exceed a maximum duration.",
+    "main": "app.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node server.js"
+    },
+    "author": "Earl Gay",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "express": "^4.17.1",
+        "timediff": "^1.1.1"
+    }
+}

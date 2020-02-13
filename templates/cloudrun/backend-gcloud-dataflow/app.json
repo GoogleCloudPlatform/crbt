@@ -1,0 +1,17 @@
+{
+    "env": {
+        "TIME_LIMIT": {
+            "description": "Maximum duration to allow a dataflow job to run",
+            "value": "99999999",
+            "required": true
+        },
+        "REGION": {
+            "description": "GCP Region where Dataflow jobs reside",
+            "value": "us-central1",
+            "required": true
+        }
+    },
+    "options": {
+        "allow-unauthenticated": false
+    }
+}

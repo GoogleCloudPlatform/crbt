@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0" />
+    <title><%= title %></title>
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Compiled and minified CSS for Materialize-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <link href="css/style.css" type="text/css" rel="stylesheet" media="screen,projection" />
+</head>
+
+<body>
+    <nav class="blue darken-3" role="navigation">
+        <div class="nav-wrapper container"><a id="logo-container" href="#" class="brand-logo"><%= title %></a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="/">Home</a></li>
+                <li><a href="/products">Products</a></li>
+                <li><a href="/orders">Orders</a></li>
+            </ul>
+
+            <ul id="nav-mobile" class="sidenav">
+                <li><a href="/">Home</a></li>
+                <li><a href="/products">Products</a></li>
+                <li><a href="/orders">Orders</a></li>
+            </ul>
+
+            <a href="#" data-target="nav-mobile" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+        </div>
+    </nav>
+    <div class="section no-pad-bot" id="index-banner">
+        <div class="container">
+            <br><br>
+            <h1 class="header center grey-text darken-3">Welcome to the <%= title %></h1>
+            <div class="row center">
+                <h5 class="header col s12 light">Take a look at our wide variety of products.</h5>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container">
+        <div class="section">
+            <div id="products-list" class="row">
+
+            </div>
+
+            <div class="row center">
+                    <a href="/products" id="products-button" class="btn-large waves-effect waves-light grey darken-3">Browse
+                        More Products</a>
+                </div>
+        </div>
+        <br><br>
+    </div>
+
+    <footer class="page-footer blue darken-3">
+        <div class="container">
+            <div class="row">
+                <div class="col l6 s12">
+                    <h5 class="white-text">Deployed with Cloud Run</h5>
+                    <p class="grey-text text-lighten-4">
+                        Congratulations, you successfully deployed a container image to <a class="white-text"
+                            href="https://cloud.google.com/run/">Cloud Run</a>.
+                        This created the revision "<i><%= revision %></i>" of the Cloud Run service
+                        "<i><%= service %></i>" in the GCP project "<i><%= project %></i>".
+                    </p>
+                </div>
+                <div class="col l6 s12">
+                    <h5 class="white-text">Template by Materialize</h5>
+                    <p class="grey-text text-lighten-4">
+                        A starter template using <a class="white-text"
+                            href="https://materializecss.com/">Materialize</a>: A modern responsive front-end framework
+                        based on Material Design.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="footer-copyright">
+            <div class="container">
+                Made by <a class="orange-text text-lighten-3" href="http://materializecss.com">Materialize</a>
+            </div>
+        </div>
+    </footer>
+
+    <!--  Scripts-->
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <!-- Compiled and minified JavaScript for Materialize -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="/js/init.js"></script>
+    <script src="/js/index.js"></script>
+
+</body>
+
+</html>

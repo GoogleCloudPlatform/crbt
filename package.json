@@ -1,0 +1,35 @@
+{
+    "name": "crbt",
+    "version": "0.1.0",
+    "description": "(C)loud (R)un (B)ootstrap (T)ool",
+    "main": "index.js",
+    "bin": {
+        "crbt": "./index.js"
+    },
+    "pkg": {
+        "assets": [
+            "templates/**/*"
+        ],
+        "targets": [
+            "node10-linux"
+        ]
+    },
+    "scripts": {
+        "package": "pkg . --output=bin/crbt",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "Earl Gay",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "cli-color": "^2.0.0",
+        "cli-spinner": "^0.2.10",
+        "commander": "^4.0.1",
+        "fs-extra": "^8.1.0",
+        "inquirer": "^7.0.0",
+        "ncp": "^2.0.0",
+        "prettyjson": "^1.2.1"
+    },
+    "devDependencies": {
+        "pkg": "^4.4.2"
+    }
+}
