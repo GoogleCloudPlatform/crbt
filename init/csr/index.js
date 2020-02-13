@@ -23,7 +23,7 @@ const fs = require('fs-extra');
 const ncp = require('ncp').ncp; // We use ncp because https://npmjs.com/pkg is not compatible with fs-extra's copy functions. https://github.com/zeit/pkg/issues/420
 
 const displayCommand = require('../../lib/displayCommand');
-const { saveConfig } = require('../../lib/parseConfig');
+const { saveConfig, getConfig } = require('../../lib/parseConfig');
 const { success, warn, failure, header, varFmt, clc } = require('../../lib/colorScheme');
 
 /**
@@ -150,6 +150,8 @@ const cloneExternalRepo = function(sourceRepo, destinationRepo, verbose, dryrun)
             return resolve();
         }
 
+        let crbtMoveToTmp = fs.moveSync('.crbt', '/tmp/.crbt'); // We move the .crbt out temporarily, because git clone does not work if the directory is not empty.
+
         const gitClone = spawnSync('git', ['clone', sourceRepo, '.']);
 
         if (verbose) {
@@ -158,9 +160,10 @@ const cloneExternalRepo = function(sourceRepo, destinationRepo, verbose, dryrun)
         }
         if (gitClone.status === 0) {
             console.log(success('Repository (' + varFmt(sourceRepo) + ') cloned locally.'));
+            let crbtMoveFromTmp = fs.moveSync('/tmp/.crbt', '.crbt'); // Once the clone is finished, bring back in the .crbt file.
             return resolve();
         } else {
-            console.log(failure('Failed to clone external repository (' + options.sourcerepo + ').'));
+            console.log(failure('Failed to clone external repository (' + sourceRepo + ').'));
             process.exit(1);
         }
     });

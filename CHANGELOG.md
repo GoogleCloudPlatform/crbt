@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 -   Added check for git configuration of name and email to ensure `git commit` can be ran.
 -   Additional helpful context on errors.
 -   README example clarity.
+-   Resolved a bug around using a git repository as the base template.
 
 ## [0.1.0] - 2020-02-12
 
