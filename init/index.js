@@ -31,7 +31,7 @@ const displayCommand = require('../lib/displayCommand');
 
 const { success, warn, failure, header, highlight, questionPrefix, varFmt, clc } = require('../lib/colorScheme');
 const { saveConfig } = require('../lib/parseConfig');
-const { checkInstalled, checkGcloudProject, checkLocalDir, checkGitLocalAuth } = require('../lib/checkPrereqs');
+const { checkInstalled, checkGcloudProject, checkLocalDir, checkGitLocalAuth, checkGitConfig } = require('../lib/checkPrereqs');
 let customizationFile = 'app.json';
 
 /**
