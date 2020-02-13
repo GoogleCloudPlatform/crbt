@@ -31,7 +31,7 @@ const displayCommand = require('../lib/displayCommand');
 
 const { success, warn, failure, header, highlight, questionPrefix, varFmt, clc } = require('../lib/colorScheme');
 const { saveConfig } = require('../lib/parseConfig');
-const { checkInstalled, checkGcloudProject, checkLocalDir } = require('../lib/checkPrereqs');
+const { checkInstalled, checkGcloudProject, checkLocalDir, checkGitLocalAuth } = require('../lib/checkPrereqs');
 let customizationFile = 'app.json';
 
 /**
@@ -43,6 +43,8 @@ const initialize = async function(options) {
         // Perform pre-requisite checks.
         checkInstalled(['git', 'gcloud']); // Check for needed programs.
         checkGcloudProject(); // Check if gcloud is initialized sufficiently.
+        checkGitLocalAuth(); // Check for git authentication configuration.
+        checkGitConfig(); // Check for git configuration of name and email.
     }
 
     let customName;
