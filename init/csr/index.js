@@ -137,28 +137,33 @@ const createRepo = function(repoName, dryrun, verbose) {
  * @param {*} dryrun - Perform the actions or simply do a dry tun test and display what would be done.
  */
 const cloneExternalRepo = function(sourceRepo, destinationRepo, verbose, dryrun) {
-    const destionalRepoUrl = 'https://source.developers.google.com/p/' + projectName + '/r/' + destinationRepo;
+    return new Promise(async (resolve, reject) => {
+        let projectName = await getConfig('project', 'name');
 
-    if (dryrun) {
-        console.log(success('Clone remote git repository.'));
-        displayCommand('git', 'clone', sourceRepo, '.');
-        displayCommand('git', 'remote', 'rm', 'origin');
-        displayCommand('git', 'remote', 'add', 'origin', destionalRepoUrl);
-        return;
-    }
+        const destionalRepoUrl = 'https://source.developers.google.com/p/' + projectName + '/r/' + destinationRepo;
 
-    const gitClone = spawnSync('git', ['clone', sourceRepo, '.']);
+        if (dryrun) {
+            console.log(success('Clone remote git repository.'));
+            displayCommand('git', 'clone', sourceRepo, '.');
+            displayCommand('git', 'remote', 'rm', 'origin');
+            displayCommand('git', 'remote', 'add', 'origin', destionalRepoUrl);
+            return resolve();
+        }
 
-    if (verbose) {
-        if (gitClone.stdout.toString('utf8') !== '') console.log(gitClone.stdout.toString('utf8'));
-        if (gitClone.stderr.toString('utf8') !== '') console.log(gitClone.stderr.toString('utf8'));
-    }
-    if (gitClone.status === 0) {
-        console.log(success('Repository (' + varFmt(sourceRepo) + ') cloned locally.'));
-    } else {
-        console.log(failure('Failed to clone external repository (' + options.sourcerepo + ').'));
-        process.exit(1);
-    }
+        const gitClone = spawnSync('git', ['clone', sourceRepo, '.']);
+
+        if (verbose) {
+            if (gitClone.stdout.toString('utf8') !== '') console.log(gitClone.stdout.toString('utf8'));
+            if (gitClone.stderr.toString('utf8') !== '') console.log(gitClone.stderr.toString('utf8'));
+        }
+        if (gitClone.status === 0) {
+            console.log(success('Repository (' + varFmt(sourceRepo) + ') cloned locally.'));
+            return resolve();
+        } else {
+            console.log(failure('Failed to clone external repository (' + options.sourcerepo + ').'));
+            process.exit(1);
+        }
+    });
 };
 
 /**
