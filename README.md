@@ -383,7 +383,6 @@ Now, when doing `git push origin master` it will push to both repositories. Plea
 ## Known Issues
 
 -   Handling existing resource conflicts may cause overwriting existing resources, or initialization to fail and require rollback with `crbt destroy` and in some cases manual cleanup of deployed services.
--   Currently, only Cloud Run (managed) is supported.
 
 ## Acknowledgments
 
