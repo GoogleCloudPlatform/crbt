@@ -23,7 +23,7 @@ const fs = require('fs-extra');
 const ncp = require('ncp').ncp; // We use ncp because https://npmjs.com/pkg is not compatible with fs-extra's copy functions. https://github.com/zeit/pkg/issues/420
 
 const displayCommand = require('../../lib/displayCommand');
-const { saveConfig } = require('../../lib/parseConfig');
+const { saveConfig, getConfig } = require('../../lib/parseConfig');
 const { success, warn, failure, header, varFmt, clc } = require('../../lib/colorScheme');
 
 /**
@@ -137,28 +137,36 @@ const createRepo = function(repoName, dryrun, verbose) {
  * @param {*} dryrun - Perform the actions or simply do a dry tun test and display what would be done.
  */
 const cloneExternalRepo = function(sourceRepo, destinationRepo, verbose, dryrun) {
-    const destionalRepoUrl = 'https://source.developers.google.com/p/' + projectName + '/r/' + destinationRepo;
+    return new Promise(async (resolve, reject) => {
+        let projectName = await getConfig('project', 'name');
 
-    if (dryrun) {
-        console.log(success('Clone remote git repository.'));
-        displayCommand('git', 'clone', sourceRepo, '.');
-        displayCommand('git', 'remote', 'rm', 'origin');
-        displayCommand('git', 'remote', 'add', 'origin', destionalRepoUrl);
-        return;
-    }
+        const destionalRepoUrl = 'https://source.developers.google.com/p/' + projectName + '/r/' + destinationRepo;
 
-    const gitClone = spawnSync('git', ['clone', sourceRepo, '.']);
+        if (dryrun) {
+            console.log(success('Clone remote git repository.'));
+            displayCommand('git', 'clone', sourceRepo, '.');
+            displayCommand('git', 'remote', 'rm', 'origin');
+            displayCommand('git', 'remote', 'add', 'origin', destionalRepoUrl);
+            return resolve();
+        }
 
-    if (verbose) {
-        if (gitClone.stdout.toString('utf8') !== '') console.log(gitClone.stdout.toString('utf8'));
-        if (gitClone.stderr.toString('utf8') !== '') console.log(gitClone.stderr.toString('utf8'));
-    }
-    if (gitClone.status === 0) {
-        console.log(success('Repository (' + varFmt(sourceRepo) + ') cloned locally.'));
-    } else {
-        console.log(failure('Failed to clone external repository (' + options.sourcerepo + ').'));
-        process.exit(1);
-    }
+        let crbtMoveToTmp = fs.moveSync('.crbt', '/tmp/.crbt'); // We move the .crbt out temporarily, because git clone does not work if the directory is not empty.
+
+        const gitClone = spawnSync('git', ['clone', sourceRepo, '.']);
+
+        if (verbose) {
+            if (gitClone.stdout.toString('utf8') !== '') console.log(gitClone.stdout.toString('utf8'));
+            if (gitClone.stderr.toString('utf8') !== '') console.log(gitClone.stderr.toString('utf8'));
+        }
+        if (gitClone.status === 0) {
+            console.log(success('Repository (' + varFmt(sourceRepo) + ') cloned locally.'));
+            let crbtMoveFromTmp = fs.moveSync('/tmp/.crbt', '.crbt'); // Once the clone is finished, bring back in the .crbt file.
+            return resolve();
+        } else {
+            console.log(failure('Failed to clone external repository (' + sourceRepo + ').'));
+            process.exit(1);
+        }
+    });
 };
 
 /**

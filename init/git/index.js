@@ -52,12 +52,15 @@ const git = function(options) {
                 console.log(success('Pushed to Cloud Source Repositories.\n'));
             } else {
                 console.log(failure('Pushing to Cloud Source Repositories failed.'));
+                process.exit(1);
             }
         } else {
             console.log(failure('Committing code failed.'));
+            process.exit(1);
         }
     } else {
         console.log(failure('Adding folder with git failed.'));
+        process.exit(1);
     }
 };
 

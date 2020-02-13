@@ -272,15 +272,17 @@ Additional values can be added to the `app.json`, or may be added in the example
 
 #### Initialization Examples
 
+The following examples are non-interactive commands that will create different permutations of deployments. All of the below could also be done with just running `crbt init` and answering prompts, as well.
+
+-   Deploy a service based on the publicly available example [Cloud Run Hello World](https://github.com/GoogleCloudPlatform/cloud-run-hello.git) GitHub repository, named hellorun, with Cloud Build CI/CD in US-East1 region, and map the domain `test.example.com` to the service:
+    `crbt init -n hellorun -b commit -p managed -r us-east1 --sourcerepo https://github.com/GoogleCloudPlatform/cloud-run-hello.git -m test.example.com`
+
 -   Create service, named after the local directory, with Cloud Build CI/CD in US-East1 region by leveraging the `api-expressjs-datafiles` template, and map the domain `test.example.com` to the service:
     `crbt init --template api-expressjs-datafiles --build commit --platform managed --region us-east1 --map test.example.com`
 
 -   Create a service, named testapp, without Cloud Build CI/CD in US-Central1 region by leveraging the `web-expressjs-helloworld` template:
     `crbt init -n testapp -t web-expressjs-helloworld -b none -p managed -r us-central1 -m none`
     `crbt deploy` (Needed due to no automatic build/deploy)
-
--   Deploy a service based on the publicly available example [Cloud Run Hello World](https://github.com/GoogleCloudPlatform/cloud-run-hello.git) GitHub repository, named hellorun, with Cloud Build CI/CD in US-East1 region, and map the domain `test.example.com` to the service:
-    `crbt init -n hellorun -b commit -p managed -r us-east1 --sourcerepo https://github.com/GoogleCloudPlatform/cloud-run-hello.git -m test.example.com`
 
 -   Deploy a service using the source within the current directory, with Cloud Build CI/CD in US-Central1 region, inheritting the name from the local directory:
     `crbt init --local -b commit -p managed -r us-east1 -m none`
