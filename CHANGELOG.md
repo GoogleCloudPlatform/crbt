@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 -   Additional helpful context on errors.
 -   README example clarity.
 -   Resolved a bug around using a git repository as the base template.
+-   Resolved an uncaught error when trying to delete an already deleted service.
 
 ## [0.1.0] - 2020-02-12
 

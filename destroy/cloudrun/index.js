@@ -98,7 +98,7 @@ const cloudrun = async (options) => {
                     //     args: ['alpha', 'run', 'deploy', 'test7', '--image', 'gcr.io/$PROJECT_ID/test7', '--platform', 'managed', '--allow-unauthenticated', '--region=us-east1']
 
                     if (cloudbuildyaml[line].includes('platform=gke')) {
-                        platform = 'gke';
+                        let platform = 'gke';
                         let splitline = cloudbuildyaml[line]
                             .split('[')[1]
                             .toString()
@@ -111,7 +111,7 @@ const cloudrun = async (options) => {
                         await destroyImage(serviceName, options.verbose).catch((e) => {});
                     }
                     if (cloudbuildyaml[line].includes('platform=managed')) {
-                        platform = 'managed';
+                        let platform = 'managed';
                         let splitline = cloudbuildyaml[line]
                             .split('[')[1]
                             .toString()
