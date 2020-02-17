@@ -165,8 +165,8 @@ const checkDNSSetup = function(domain) {
  * @param {string} domain - Custom domain address.
  * @param {string} service - Service to bind the address to.
  * @param {string} region - Region the service exists.
- * @param {string} verbose - Verbosity.
- * @param {string} dryrun - Dry-run true/false.
+ * @param {boolean} verbose - Verbosity.
+ * @param {boolean} dryrun - Perform the actions or simply do a dry tun test and display what would be done.
  * @returns {boolean} - True if mapping is successful.
  */
 const createDomainMapping = function(domain, service, region, verbose, dryrun) {

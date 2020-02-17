@@ -24,6 +24,7 @@ const cloudrun = require('./cloudrun/index');
 const csr = require('./csr/index');
 const cloudbuild = require('./cloudbuild/index');
 const domain = require('./domain/index');
+const schedulerDelete = require('../trigger/delete/scheduler/index');
 
 const { getConfig, removeConfigSection } = require('../lib/parseConfig');
 const { clc, header, failure, warn, highlight, questionPrefix, varFmt } = require('../lib/colorScheme');
@@ -108,6 +109,10 @@ async function main(options, answers, mode) {
         if (mode == 'cloudrun') {
             cloudrun(options);
         } else {
+            // Remove trigger first
+            let triggerType = getConfig('trigger', 'type');
+            if (triggerType === 'scheduler') await schedulerDelete(options);
+
             await csr(options);
             await cloudbuild(options);
             await cloudrun(options);
