@@ -121,15 +121,17 @@ Below is a brief list of the available commands and their function:
 
 ### Commands
 
-| Command               | Description                                                                                                                                                                                                                                         |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **init**              | Setup a new application in the current directory. This command will create a `crbt.conf` configuration file in your current directory. It will also look for an `app.json` for customization parameters.                                            |
-| **customize**         | Re-parse the `app.json` file, and re-prompt for environment variables.                                                                                                                                                                              |
-| **deploy**            | Deploys the Cloud Run service within the current directory. Relies on a `cloudbuild.yaml` file and the local project directory. This is the method to deploy the service if automatic Cloud Build triggers were not selected during initialization. |
-| **destroy** [feature] | Destroys deployed services, but does not delete local code. [feature] can be `all` (Default) or `cloudrun`.                                                                                                                                         |
-| **status**            | Output current configuration status.                                                                                                                                                                                                                |
-| **list**              | List available built-in templates for Cloud Run services.                                                                                                                                                                                           |
-| **help**              | Display help information about the CLI or specific commands.                                                                                                                                                                                        |
+| Command                      | Description                                                                                                                                                                                                                                         |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **init**                     | Setup a new application in the current directory. This command will create a `crbt.conf` configuration file in your current directory. It will also look for an `app.json` for customization parameters.                                            |
+| **customize**                | Re-parse the `app.json` file, and re-prompt for environment variables.                                                                                                                                                                              |
+| **deploy**                   | Deploys the Cloud Run service within the current directory. Relies on a `cloudbuild.yaml` file and the local project directory. This is the method to deploy the service if automatic Cloud Build triggers were not selected during initialization. |
+| **destroy** [feature]        | Destroys deployed services, but does not delete local code. [feature] can be `all` (Default) or `cloudrun`.                                                                                                                                         |
+| **list**                     | List available built-in templates for Cloud Run services.                                                                                                                                                                                           |
+| **status**                   | Output current configuration status.                                                                                                                                                                                                                |
+| **trigger:create:scheduler** | Create a new Cloud Scheduler trigger for the Cloud Run service.                                                                                                                                                                                     |
+| **trigger:delete:scheduler** | Delete a Cloud Scheduler trigger for the Cloud Run service.                                                                                                                                                                                         |
+| **help**                     | Display help information about the CLI or specific commands.                                                                                                                                                                                        |
 
 ### Command Options
 
@@ -181,13 +183,39 @@ Destroys deployed services. [feature] can be:
 | **-r, --rep**      | Override and specify Cloud Source Repositories repo to delete.                              |
 | **-v, --verbose**  | Verbose mode                                                                                |
 
+#### list
+
+This command does not have any options.
+
 #### status
 
 This command does not have any options.
 
-#### list
+#### trigger:create:scheduler
 
-This command does not have any options.
+Create a new [Cloud Scheduler](https://cloud.google.com/scheduler) [trigger](https://cloud.google.com/run/docs/triggering/using-scheduler) for the Cloud Run service that calls the service based on [cron](https://en.wikipedia.org/wiki/Cron#Overview) format.
+
+| Option             | Description                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------- |
+| **-s, --schedule** | Schedule on which the job will be executed. (unix-cron format)                                  |
+| **-m, --method**   | HTTP method to use for the request [GET, PUT, POST]                                             |
+| **-b, --body**     | Data payload to be included as the body of the HTTP request. (only valid for PUT, POST methods) |
+| **-a, --account**  | Service account used to authenticate to the Cloud Run service (name only, not email)            |
+| **-d, --dryrun**   | Only show commands, but do not execute them in GCP                                              |
+| **-v, --verbose**  | Verbose mode                                                                                    |
+
+Additional Cloud Scheduler trigger documentation:
+
+-   Cloud SDK > [gcloud scheduler jobs create http](https://cloud.google.com/sdk/gcloud/reference/scheduler/jobs/create/http)
+-   Cloud Run > [Running services on a schedule](https://cloud.google.com/run/docs/triggering/using-scheduler)
+
+#### trigger:delete:scheduler
+
+Remove a [Cloud Scheduler](https://cloud.google.com/scheduler) [trigger](https://cloud.google.com/run/docs/triggering/using-scheduler) for the Cloud Run service.
+
+| Option            | Description  |
+| ----------------- | ------------ |
+| **-v, --verbose** | Verbose mode |
 
 ### Customizing deployment parameters
 

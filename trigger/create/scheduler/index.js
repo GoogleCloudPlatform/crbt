@@ -58,6 +58,8 @@ const schedulerCreate = async function(options) {
             console.log(failure('Unable to detect all necessary values within configuration. Make sure service was initialized properly with crbt. Exiting...'));
             process.exit(1);
         }
+        // We need to define a region for the App Engine app location.
+        region = clusterzone.split('-')[0] + '-' + clusterzone.split('-')[1]; // TODO: Use splice() instead.
     }
 
     // From a crbt perspective, we only want to support 1 trigger (excluding regular HTTP trigger).
@@ -67,8 +69,12 @@ const schedulerCreate = async function(options) {
         process.exit(1);
     }
 
-    // Enable the Cloud Scheduler API: gcloud services enable cloudscheduler.googleapis.com
+    // Enable the Cloud Scheduler and App Engine APIs
     enableAPI('cloudscheduler', options.dryrun, options.verbose);
+    enableAPI('appengine', options.dryrun, options.verbose);
+
+    // Check & enable App Engine app which is required for Cloud Scheduler
+    checkAppEngineApp(region, options.verbose);
 
     // If unauthenticated invocations are not allowed, we have to use a service account to invoke the service.
     if (allowUnauthenticated === false) {
@@ -96,7 +102,6 @@ const schedulerCreate = async function(options) {
             }
             if (iamCreate.status === 0) {
                 console.log(success('Cloud Run IAM Policy Binding added (' + varFmt(options.account) + '): ' + varFmt('roles/run.invoker')));
-                await saveConfig('trigger', 'serviceAccount', options.account);
             } else {
                 console.log(failure('Cloud Run IAM Policy Binding failed.'));
                 process.exit(1);
@@ -120,11 +125,12 @@ const schedulerCreate = async function(options) {
     }
 
     let schedulerCommand = ['scheduler', 'jobs', 'create', 'http', jobName, '--schedule', options.schedule, '--uri=' + serviceUrl, '--http-method=' + options.method];
-    if (options.body) command.push('--message-body=' + options.body);
+    if (options.body) schedulerCommand.push('--message-body=' + options.body);
     if (allowUnauthenticated === false) {
         schedulerCommand.push('--oidc-service-account-email=' + options.account);
         schedulerCommand.push('--oidc-token-audience=' + serviceUrl);
     }
+    schedulerCommand.push('--quiet');
 
     if (options.dryrun) {
         displayCommand('gcloud', schedulerCommand);
@@ -136,6 +142,7 @@ const schedulerCreate = async function(options) {
         }
         if (createScheduler.status === 0) {
             console.log(success('Cloud Scheduler trigger created.'));
+            await saveConfig('trigger', 'serviceAccount', options.account);
             await saveConfig('trigger', 'name', jobName);
             await saveConfig('trigger', 'type', 'scheduler');
         } else {
@@ -144,6 +151,50 @@ const schedulerCreate = async function(options) {
         }
     }
 };
+
+/**
+ * @returns {boolean} - App found true/false.
+ */
+function checkAppEngineApp(region, verbose) {
+    return new Promise(async (resolve, reject) => {
+        let command = ['app', 'describe'];
+
+        const checkAppEngine = spawn('gcloud', command);
+        if (verbose) {
+            if (checkAppEngine.stdout.toString('utf8') !== '') console.log(checkAppEngine.stdout.toString('utf8'));
+            if (checkAppEngine.stderr.toString('utf8') !== '') console.log(checkAppEngine.stderr.toString('utf8'));
+        }
+        if (checkAppEngine.status === 0) {
+            console.log(success('App Engine app found.'));
+            return resolve();
+        } else {
+            console.log(warn('App Engine app not found (required for Cloud Scheduler). Attempting to create...'));
+            enableAppEngineApp(region, verbose);
+            return resolve();
+        }
+    });
+}
+
+function enableAppEngineApp(region, verbose) {
+    // App Engine locations have a few anomalies (i.e. us-central1 is us-central, and europe-west1 is europe-west) that we need to account for.
+    if (region === 'us-central1') region = 'us-central';
+    if (region === 'europe-west1') region = 'europe-west';
+
+    let command = ['app', 'create', '--region=' + region];
+
+    const createAppEngineApp = spawn('gcloud', command);
+    if (verbose) {
+        if (createAppEngineApp.stdout.toString('utf8') !== '') console.log(createAppEngineApp.stdout.toString('utf8'));
+        if (createAppEngineApp.stderr.toString('utf8') !== '') console.log(createAppEngineApp.stderr.toString('utf8'));
+    }
+    if (createAppEngineApp.status === 0) {
+        console.log(warn('App Engine app created in: ' + varFmt(region)));
+        return;
+    } else {
+        console.log(failure('Creating App Engine app failed.'));
+        process.exit(1);
+    }
+}
 
 /**
  * Check to see if a service account already exists.

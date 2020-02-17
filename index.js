@@ -53,31 +53,6 @@ program
         initialize(options);
     });
 
-// This command runs Cloud Build directly; this is primarily used when a Cloud Build trigger wasn't created to automatically run it.
-program
-    .command('deploy')
-    .description('Build and deploy services')
-    .option('-v, --verbose', 'Verbose mode')
-    .action((options) => {
-        deploy(options);
-    });
-
-// Parse the config file and return it in a human readable YAML-style format to show the status.
-program
-    .command('status')
-    .description('Print status')
-    .action(() => {
-        status();
-    });
-
-// List available templates (used if using a template as a base for source code).
-program
-    .command('list')
-    .description('List available templates')
-    .action(() => {
-        list();
-    });
-
 // Handle customization of the service, specifically relating to environment variables currently. This can be called directly via `crbt customize` or as part of the init process.
 program
     .command('customize')
@@ -87,6 +62,15 @@ program
     .option('-v, --verbose', 'Verbose mode')
     .action((options) => {
         customize(options, true);
+    });
+
+// This command runs Cloud Build directly; this is primarily used when a Cloud Build trigger wasn't created to automatically run it.
+program
+    .command('deploy')
+    .description('Build and deploy services')
+    .option('-v, --verbose', 'Verbose mode')
+    .action((options) => {
+        deploy(options);
     });
 
 // Handle destruction of services previously created. Only runs if the current directory has a .crbt file and utilizes that to determine what to remove.
@@ -99,6 +83,22 @@ program
     .option('-v, --verbose', 'Verbose mode')
     .action((options) => {
         destroy(options);
+    });
+
+// List available templates (used if using a template as a base for source code).
+program
+    .command('list')
+    .description('List available templates')
+    .action(() => {
+        list();
+    });
+
+// Parse the config file and return it in a human readable YAML-style format to show the status.
+program
+    .command('status')
+    .description('Print status')
+    .action(() => {
+        status();
     });
 
 // This command creates a Cloud Scheduler job to trigger the Cloud Run service.
