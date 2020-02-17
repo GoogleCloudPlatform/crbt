@@ -27,6 +27,7 @@ It also provides functionality to:
 -   Provide automatic clean up of all deployed services and artifacts to retire the service.
 -   Interactively create an `app.json` file that can be used to non-interactive re-deploy the service.
 -   Redeploy the service and supporting services (including across other projects) by utilizing the `.crbt` configuration file.
+-   Create triggers using services like [Cloud Scheduler](https://cloud.google.com/scheduler) to invoke the service.
 
 ### How can I use it?
 
@@ -351,6 +352,35 @@ options:
 cloudbuild:
   newapplication-trigger: a389dcd2-a700-xxxx-99d2-20dce913f241
 mapping:    jan19-01.esquared.dev
+```
+
+#### Trigger Create (Cloud Scheduler) Example
+
+-   Create Cloud Scheduler HTTP GET trigger that runs every hour:
+
+```
+crbt trigger:create:scheduler --schedule "0 * * * *" --method GET
+```
+
+**Output Example:**
+
+```
+=== Cloud Scheduler Trigger Creation
+
+[ > ] Services API enabled: cloudscheduler
+[ > ] Services API enabled: appengine
+[ ! ] App Engine app not found. Attempting to create...
+[ ! ] App Engine app created in: us-east1
+[ ? ] What service account would you like to use (name only, not email)? feb17-01-invoker
+[ ! ] Service account not found. Attempting to create...
+[ > ] Service Account created: feb17-01-invoker@es-lab5.iam.gserviceaccount.com
+[ > ] Cloud Run IAM Policy Binding added (feb17-01-invoker@es-lab5.iam.gserviceaccount.com): roles/run.invoker
+[ > ] Using schedule: 0 * * * *
+[ > ] Using method: GET
+[ > ] Cloud Scheduler trigger created.
+[ > ] Configuration saved to file (.crbt): trigger -> serviceAccount -> feb17-01-invoker@es-lab5.iam.gserviceaccount.com
+[ > ] Configuration saved to file (.crbt): trigger -> name -> scheduler-feb17-01
+[ > ] Configuration saved to file (.crbt): trigger -> type -> scheduler
 ```
 
 ## Frequently Asked Questions (FAQ)
