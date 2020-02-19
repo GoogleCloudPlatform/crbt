@@ -25,9 +25,10 @@ const git = require('./git/index');
 const cloudbuild = require('./cloudbuild/index');
 const domain = require('./domain/index');
 const findServices = require('../lib/findServices');
+const deploySubmit = require('../deploy/index');
 const customize = require('../customize/index');
 const { populateTemplateList } = require('../list/index');
-const displayCommand = require('../lib/displayCommand');
+const enableAPI = require('../lib/enableAPI');
 
 const { success, warn, failure, header, highlight, questionPrefix, varFmt, clc } = require('../lib/colorScheme');
 const { saveConfig } = require('../lib/parseConfig');
@@ -91,9 +92,9 @@ const initialize = async function(options) {
     }
 
     // Enable required GCP Service APIs.
-    enableAPI('sourcerepo', options.dryrun, options.verbose);
-    enableAPI('cloudbuild', options.dryrun, options.verbose);
-    enableAPI('run', options.dryrun, options.verbose);
+    enableAPI('sourcerepo', options.verbose, options.dryrun);
+    enableAPI('cloudbuild', options.verbose, options.dryrun);
+    enableAPI('run', options.verbose, options.dryrun);
 
     await saveConfig('name', options.name); // Could put this below, but it's visually more appealing to have this first in the config.
 
@@ -135,9 +136,10 @@ const initialize = async function(options) {
         if (!options.dryrun) console.log(highlight('\ncrbt initialization complete!'));
         else console.log(highlight('\ncrbt dry run complete!'));
     } else {
-        console.log(highlight('\ncrbt initialization complete!\n'));
-        console.log(warn('Since automated builds were not enabled, to perform deployment execute: ' + header('crbt deploy')));
-        if (options.map) console.log(warn('Domain mapping is not supported without automatic builds, since the service must first be deployed.'));
+        deploySubmit(options);
+        //console.log(highlight('\ncrbt initialization complete!\n'));
+        //console.log(warn('Since automated builds were not enabled, to perform deployment execute: ' + header('crbt deploy')));
+        //if (options.map) console.log(warn('Domain mapping is not supported without automatic builds, since the service must first be deployed.'));
     }
 };
 
@@ -308,29 +310,6 @@ function determineBase(options) {
 }
 
 /**
- * Check if a Cloud API is enabled and if not then enable it, which will allow usage of the service.
- * @param {string} service - GCP Service to enable.
- */
-function enableAPI(service, dryrun, verbose) {
-    let command = ['services', 'enable', service + '.googleapis.com'];
-    if (dryrun) {
-        displayCommand('gcloud', command);
-        return;
-    }
-    let serviceEnable = spawn('gcloud', command);
-    if (verbose) {
-        if (serviceEnable.stdout.toString('utf8') !== '') console.log(serviceEnable.stdout.toString('utf8'));
-        if (serviceEnable.stderr.toString('utf8') !== '') console.log(serviceEnable.stderr.toString('utf8'));
-    }
-    if (serviceEnable.status === 0) {
-        console.log(success('Services API enabled: ' + varFmt(service)));
-    } else {
-        console.log(failure('Services API failed to enable: ' + varFmt(service)));
-        process.exit(1);
-    }
-}
-
-/**
  * Determine which GCP region to use.
  * Cloud Run (fully managed) locations: https://cloud.google.com/run/docs/locations
  * @param {object} options - Initialized from commander.js.
@@ -464,8 +443,10 @@ async function deploy(options) {
     });
 }
 
+/**
+ * If service is configured to not allow unauthenticated access, then don't allow it to be deployed to GKE which doesn't support that method through crbt.
+ */
 function checkGkeUnauthViolation() {
-    // Check if "allowUnauthenticated" is set to false within the `app.json`. If it's false (aka don't allow unauthenticated), then don't allow it to be deployed to GKE which doesn't support that flag.
     let allowUnauthenticated = true;
     try {
         allowUnauthenticated = JSON.parse(fs.readFileSync(customizationFile)).options['allow-unauthenticated'];

@@ -49,7 +49,7 @@ const cloudbuild = async (options) => {
 
         if (options.build) {
             if (options.build == 'commit') {
-                setupCloudbuildIAM(options.dryrun, options.verbose);
+                setupCloudbuildIAM(options.platform, options.dryrun, options.verbose);
                 await enableTriggers(options.name, options.dryrun, options.verbose).catch((e) => {
                     console.log(failure('Fatal error. Recommend cleaning up with `crbt destroy`. Exiting...'));
                     process.exit(1);
@@ -79,14 +79,14 @@ const cloudbuild = async (options) => {
                 // It doesn't make sense to have a trigger for one service but not the others, so enable for all.
                 if (answers.cloudbuild == 'Yes') {
                     options.build = 'commit';
-                    setupCloudbuildIAM(options.dryrun, options.verbose);
+                    setupCloudbuildIAM(options.platform, options.dryrun, options.verbose);
                     await enableTriggers(options.name, options.dryrun, options.verbose).catch((e) => {
                         console.log(failure('Fatal error. Recommend cleaning up with `crbt destroy`. Exiting...'));
                     });
                     return resolve();
                 } else if (answers.cloudbuild == 'No') {
                     options.build = 'none';
-                    console.log(success('Skipping trigger setup...'));
+                    console.log(success('Skipping trigger setup...\n'));
                     return resolve();
                 }
             });
@@ -253,15 +253,17 @@ async function enableTriggers(name, dryrun, verbose) {
  * @param {boolean} dryrun - Perform the actions or simply do a dry tun test and display what would be done.
  * @param {boolean} verbose - Verbosity level.
  */
-function setupCloudbuildIAM(dryrun, verbose) {
+function setupCloudbuildIAM(platform, dryrun, verbose) {
     let projectId = getConfig('project', 'id');
 
     let runAdminCommand = ['projects', 'add-iam-policy-binding', projectId, '--member=serviceAccount:' + projectId + '@cloudbuild.gserviceaccount.com', '--role=roles/run.admin'];
     let serviceAccountUserIAMCommand = ['projects', 'add-iam-policy-binding', projectId, '--member=serviceAccount:' + projectId + '@cloudbuild.gserviceaccount.com', '--role=roles/iam.serviceAccountUser'];
+    let gkeDevelCommand = ['projects', 'add-iam-policy-binding', projectId, '--member=serviceAccount:' + projectId + '@cloudbuild.gserviceaccount.com', '--role=roles/container.developer'];
 
     if (dryrun) {
         displayCommand('gcloud', runAdminCommand);
         displayCommand('gcloud', serviceAccountUserIAMCommand);
+        if (platform === 'gke') displayCommand('gcloud', gkeDevelCommand);
         return;
     }
 
@@ -285,6 +287,19 @@ function setupCloudbuildIAM(dryrun, verbose) {
         console.log(success('Cloud Build IAM Policy added (' + varFmt(projectId + '@cloudbuild.gserviceaccount.com') + '): ' + varFmt('roles/iam.serviceAccountUser')));
     } else {
         console.log(failure('Cloud Build IAM Policy Creation Failed: ' + varFmt('roles/iam.serviceAccountUser')));
+    }
+
+    if (platform === 'gke') {
+        let gkeDevelIAM = spawn('gcloud', gkeDevelCommand);
+        if (verbose) {
+            if (gkeDevelIAM.stdout.toString('utf8') !== '') console.log(gkeDevelIAM.stdout.toString('utf8'));
+            if (gkeDevelIAM.stderr.toString('utf8') !== '') console.log(gkeDevelIAM.stderr.toString('utf8'));
+        }
+        if (gkeDevelIAM.status === 0) {
+            console.log(success('Cloud Build IAM Policy added (' + varFmt(projectId + '@cloudbuild.gserviceaccount.com') + '): ' + varFmt('roles/run.admin')));
+        } else {
+            console.log(failure('Cloud Build IAM Policy Creation Failed:' + varFmt('roles/run.admin')));
+        }
     }
 }
 

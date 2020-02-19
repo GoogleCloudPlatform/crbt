@@ -16,62 +16,11 @@ gcloud services enable dataflow.googleapis.com
 
 ## Configure Cloud Scheduler
 
-Follow the below steps to setup Cloud Scheduler to run this service periodically.
-
-1. Enable the Cloud Scheduler API:
+1. Create a Cloud Scheduler trigger that runs hourly:
 
 ```
-gcloud services enable cloudscheduler.googleapis.com
+crbt trigger:create:scheduler --schedule "0 * * * *" --method GET
 ```
-
-2. Create a Service Account for Cloud Scheduler to use:
-
-```
-gcloud iam service-accounts create [SERVICE-ACCOUNT_NAME] \
-   --display-name "[SERVICE_NAME] Invoker"
-```
-
-3. Give the newly created Service Account permissions to invoke the service:
-
-```
-gcloud run services add-iam-policy-binding [SERVICE_NAME] \
-   --member=serviceAccount:[SERVICE-ACCOUNT_NAME]@[PROJECT].iam.gserviceaccount.com \
-   --role=roles/run.invoker \
-   --platform managed \
-   --region [REGION]
-```
-
-4. Create the Cloud Scheduler Job (this uses normal Cron syntax, and the below example runs every 1 minutes -- which is good for testing but would ideally be longer for production)
-
-```
-gcloud beta scheduler jobs create http [SERVICE_NAME]-job --schedule "*/1 * * * *" \
-   --http-method=GET \
-   --uri=[SERVICE_URL] \
-   --oidc-service-account-email=[SERVICE-ACCOUNT_NAME]@[PROJECT].iam.gserviceaccount.com   \
-   --oidc-token-audience=[SERVICE_URL]
-```
-
-_Note: If prompted, select yes to create an App Engine project, select yes to enable the App Engine API, and select the same [REGION] for the region._
-
-Confirm the scheduled job was created:
-
-```
-gcloud beta scheduler jobs list
-```
-
-If you want to change the schedule (e.g. increase to every 5 minutes), run the following:
-
-```
-gcloud beta scheduler jobs update http [SERVICE_NAME]-job --schedule "*/5 * * * *"
-```
-
-Variable definitions:
-
--   [SERVICE_NAME]: Name of Cloud Run service.
--   [SERVICE_URL]: URL of the Cloud Run service.
--   [EMAIL]: Email of the user account that is running the `gcloud` command to test.
--   [SERVICE-ACCOUNT-NAME]: Desired name for the service account that Cloud Scheduler will use to invoke the service.
--   [PROJECT]: GCP Project name.
 
 Further documentation:
 
@@ -80,7 +29,7 @@ Further documentation:
 
 ## Testing
 
-**Please note: Testing should ONLY be done in a project that does not have ANY production Dataflow jobs or else those have a risk of being canceled.**
+**Please note: Testing should ONLY be done in a project that does not have ANY production Dataflow jobs.**
 
 There are several ways to test the service:
 
@@ -88,10 +37,10 @@ There are several ways to test the service:
 2. **Cloud Run Service Manually**: Invoke the Cloud Run Service directly without Cloud Scheduler
 3. **Entire workflow**: Let Cloud Scheduler and Cloud Run run as they would in production
 
-In all of those scenarios, it can be easier to test with [TIME_LIMIT] set to a very small number (e.g. 0 -- which cancels any job running 1 minute or more). For the Cloud Run service, you can change the TIME_LIMIT through the console of the Cloud Run service, or with the following command:
+In all of those scenarios, it can be easier to test with [TIME_LIMIT] set to a very small number (e.g. 0 -- which cancels any job running 1 minute or more). For the Cloud Run service, you can change the TIME_LIMIT with the following command:
 
 ```
-gcloud run services update [SERVICE_NAME] --set-env-vars TIME_LIMIT=0 --platform managed --region [REGION]
+crbt customize
 ```
 
 To change it back, simply run the command again with your desired production time limit.
@@ -183,10 +132,3 @@ If there were jobs found, the job IDs would be listed within the above, such as:
 Use this [Interactive Tutorial](https://console.cloud.google.com/dataflow?walkthrough_tutorial_id=dataflow_index) that will create a walkthrough pane in your Google Cloud Console to start a job. The job created through the tutorial should run longer than 1 minute, and as a result will be canceled by the service.
 
 You should see within the logs of the Cloud Run Service results showing the job exceeding the duration.
-
-### Cleanup
-
-crbt will not clean up any resources created manually within this README. These will need to be deleted manually:
-
-1. Cloud Scheduler Job
-2. IAM Policy

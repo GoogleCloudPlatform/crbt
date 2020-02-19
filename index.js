@@ -25,6 +25,8 @@ const deploy = require('./deploy/index');
 const destroy = require('./destroy/index');
 const status = require('./status/index');
 const customize = require('./customize/index');
+const schedulerCreate = require('./trigger/create/scheduler/index');
+const schedulerDelete = require('./trigger/delete/scheduler/index');
 const { list } = require('./list/index');
 
 // Options
@@ -51,31 +53,6 @@ program
         initialize(options);
     });
 
-// This command runs Cloud Build directly; this is primarily used when a Cloud Build trigger wasn't created to automatically run it.
-program
-    .command('deploy')
-    .description('Build and deploy services')
-    .option('-v, --verbose', 'Verbose mode')
-    .action((options) => {
-        deploy(options);
-    });
-
-// Parse the config file and return it in a human readable YAML-style format to show the status.
-program
-    .command('status')
-    .description('Print status')
-    .action(() => {
-        status();
-    });
-
-// List available templates (used if using a template as a base for source code).
-program
-    .command('list')
-    .description('List available templates')
-    .action(() => {
-        list();
-    });
-
 // Handle customization of the service, specifically relating to environment variables currently. This can be called directly via `crbt customize` or as part of the init process.
 program
     .command('customize')
@@ -87,16 +64,64 @@ program
         customize(options, true);
     });
 
+// This command runs Cloud Build directly; this is primarily used when a Cloud Build trigger wasn't created to automatically run it.
+program
+    .command('deploy')
+    .description('Build and deploy services')
+    .option('-v, --verbose', 'Verbose mode')
+    .action((options) => {
+        deploy(options);
+    });
+
 // Handle destruction of services previously created. Only runs if the current directory has a .crbt file and utilizes that to determine what to remove.
 program
     .command('destroy')
     .description('Destroy all enabled services from the current directory')
-    .option('-y, --yes', 'Confirm destroying entire project with no prompts.')
+    .option('-y, --yes', 'Confirm destroying entire project with no prompts')
     .option('-p, --preserve', "Don't delete .crbt config")
-    .option('-r, --repo [repo]', 'Override and specify CSR repo to delete.')
+    .option('-r, --repo [repo]', 'Override and specify CSR repo to delete')
     .option('-v, --verbose', 'Verbose mode')
     .action((options) => {
         destroy(options);
+    });
+
+// List available templates (used if using a template as a base for source code).
+program
+    .command('list')
+    .description('List available templates')
+    .action(() => {
+        list();
+    });
+
+// Parse the config file and return it in a human readable YAML-style format to show the status.
+program
+    .command('status')
+    .description('Print status')
+    .action(() => {
+        status();
+    });
+
+// This command creates a Cloud Scheduler job to trigger the Cloud Run service.
+program
+    .command('trigger:create:scheduler')
+    .description('Create a new Cloud Scheduler trigger for the Cloud Run service')
+    .option('-s, --schedule [schedule]', 'Schedule on which the job will be executed. (unix-cron format)')
+    .option('-m, --method [method]', 'HTTP method to use for the request [GET, PUT, POST]')
+    .option('-b, --body [message]', 'Data payload to be included as the body of the HTTP request. (only valid for PUT, POST methods)')
+    .option('-a, --account [service account]', 'Service account used to authenticate to the Cloud Run service (name only, not email)')
+    .option('-d, --dryrun', 'Only show commands, but do not execute them in GCP')
+    .option('-v, --verbose', 'Verbose mode')
+    .action((options) => {
+        schedulerCreate(options);
+    });
+
+// This command deletes a Cloud Scheduler job that was used to trigger the Cloud Run service.
+program
+    .command('trigger:delete:scheduler')
+    .description('Delete a Cloud Scheduler trigger for the Cloud Run service')
+    .option('-v, --verbose', 'Verbose mode')
+    .action((options) => {
+        schedulerDelete(options);
     });
 
 program.parse(process.argv);

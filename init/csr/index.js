@@ -63,15 +63,15 @@ const csr = async (options) => {
             });
         }
 
-        await saveConfig('cloudrun', options.name);
+        await saveConfig('cloudrun', options.name, 'placeholder');
         return resolve();
     });
 };
 
 /**
  * Run git initialization within the current directory.
- * @param {*} verbose - Verbosity level.
- * @param {*} dryrun - Perform the actions or simply do a dry tun test and display what would be done.
+ * @param {boolean} verbose - Verbosity level.
+ * @param {boolean} dryrun - Perform the actions or simply do a dry tun test and display what would be done.
  */
 const initializeGit = function(verbose, dryrun) {
     if (dryrun) {
@@ -133,8 +133,8 @@ const createRepo = function(repoName, dryrun, verbose) {
  * Clone from sourceRepo repository and then swap the remote origin to the destinationRepo.
  * @param {string} sourceRepo - Source repository to clone the code from.
  * @param {string} destinationRepo - New repository name to set the origin in git to.
- * @param {*} verbose - Verbosity level.
- * @param {*} dryrun - Perform the actions or simply do a dry tun test and display what would be done.
+ * @param {boolean} verbose - Verbosity level.
+ * @param {boolean} dryrun - Perform the actions or simply do a dry tun test and display what would be done.
  */
 const cloneExternalRepo = function(sourceRepo, destinationRepo, verbose, dryrun) {
     return new Promise(async (resolve, reject) => {
@@ -172,8 +172,8 @@ const cloneExternalRepo = function(sourceRepo, destinationRepo, verbose, dryrun)
 /**
  * Set the remote origin in git to the CSR repo.
  * @param {string} destinationRepo - New repository name to set the origin in git to.
- * @param {*} verbose - Verbosity level.
- * @param {*} dryrun - Perform the actions or simply do a dry tun test and display what would be done.
+ * @param {boolean} verbose - Verbosity level.
+ * @param {boolean} dryrun - Perform the actions or simply do a dry tun test and display what would be done.
  */
 const setRemoteOriginToCSR = function(destinationRepo, verbose, dryrun) {
     return new Promise(async (resolve, reject) => {
