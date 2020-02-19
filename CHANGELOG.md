@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 -   Changed the way the `cloudrun` section within the `.crbt` configuration file is stored. Previously used a more complex approach based on earlier prototype approaches. The `parseConfig` library and references were updated to reflect.
 -   Documentation and formatting fixes.
 -   Re-ordered commands in help to be alphabetized in list (excluding init).
+-   Built in the initial deploy call from `crbt init` to `crbt deploy` which previously required manual execution.
 
 ## [0.1.1] - 2020-02-13
 

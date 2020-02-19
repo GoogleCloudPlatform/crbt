@@ -86,7 +86,7 @@ const cloudbuild = async (options) => {
                     return resolve();
                 } else if (answers.cloudbuild == 'No') {
                     options.build = 'none';
-                    console.log(success('Skipping trigger setup...'));
+                    console.log(success('Skipping trigger setup...\n'));
                     return resolve();
                 }
             });

@@ -25,6 +25,7 @@ const git = require('./git/index');
 const cloudbuild = require('./cloudbuild/index');
 const domain = require('./domain/index');
 const findServices = require('../lib/findServices');
+const deploySubmit = require('../deploy/index');
 const customize = require('../customize/index');
 const { populateTemplateList } = require('../list/index');
 const enableAPI = require('../lib/enableAPI');
@@ -91,9 +92,9 @@ const initialize = async function(options) {
     }
 
     // Enable required GCP Service APIs.
-    enableAPI('sourcerepo', options.dryrun, options.verbose);
-    enableAPI('cloudbuild', options.dryrun, options.verbose);
-    enableAPI('run', options.dryrun, options.verbose);
+    enableAPI('sourcerepo', options.verbose, options.dryrun);
+    enableAPI('cloudbuild', options.verbose, options.dryrun);
+    enableAPI('run', options.verbose, options.dryrun);
 
     await saveConfig('name', options.name); // Could put this below, but it's visually more appealing to have this first in the config.
 
@@ -135,9 +136,10 @@ const initialize = async function(options) {
         if (!options.dryrun) console.log(highlight('\ncrbt initialization complete!'));
         else console.log(highlight('\ncrbt dry run complete!'));
     } else {
-        console.log(highlight('\ncrbt initialization complete!\n'));
-        console.log(warn('Since automated builds were not enabled, to perform deployment execute: ' + header('crbt deploy')));
-        if (options.map) console.log(warn('Domain mapping is not supported without automatic builds, since the service must first be deployed.'));
+        deploySubmit(options);
+        //console.log(highlight('\ncrbt initialization complete!\n'));
+        //console.log(warn('Since automated builds were not enabled, to perform deployment execute: ' + header('crbt deploy')));
+        //if (options.map) console.log(warn('Domain mapping is not supported without automatic builds, since the service must first be deployed.'));
     }
 };
 

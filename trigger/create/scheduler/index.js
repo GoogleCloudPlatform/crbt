@@ -25,19 +25,20 @@ const { success, warn, failure, header, questionPrefix, varFmt, clc } = require(
 const { saveConfig, getConfig } = require('../../../lib/parseConfig');
 
 /**
- * Create a Cloud Scheduler trigger to call the Cloud Run service on an interval.
+ * Create a Cloud Scheduler trigger to call the Cloud Run service on a scheduled interval.
  * @param {object} options - Initialized from commander.js.
  */
 const schedulerCreate = async function(options) {
     console.log(header('\n=== Cloud Scheduler Trigger Creation\n'));
 
+    // Obtain service settings from `.crbt` configuration file.
     let serviceName = getConfig('name');
     let serviceUrl = getConfig('cloudrun', serviceName);
     let platform = getConfig('platform');
     let project = getConfig('project', 'name');
     let allowUnauthenticated = getConfig('options', 'allow-unauthenticated');
 
-    // We rely on this being a crbt project for configuration parameters.
+    // We rely on this being a crbt project for configuration parameters, so exit if anything is missing. No successful, valid deployment should be missing these.
     if (serviceName === undefined || allowUnauthenticated === undefined || serviceName === undefined || platform === undefined || project === undefined || serviceUrl === undefined) {
         console.log(failure('Unable to detect all necessary values within configuration. Make sure service was initialized properly with crbt. Exiting...'));
         process.exit(1);
@@ -58,11 +59,11 @@ const schedulerCreate = async function(options) {
             console.log(failure('Unable to detect all necessary values within configuration. Make sure service was initialized properly with crbt. Exiting...'));
             process.exit(1);
         }
-        // We need to define a region for the App Engine app location.
-        region = clusterzone.split('-')[0] + '-' + clusterzone.split('-')[1]; // TODO: Use splice() instead.
+        // We need to define a region for the App Engine app location, which can be detected from the zone.
+        region = clusterzone.split('-')[0] + '-' + clusterzone.split('-')[1];
     }
 
-    // From a crbt perspective, we only want to support 1 trigger (excluding regular HTTP trigger).
+    // From a crbt perspective, we only want to support 1 trigger (excluding regular HTTP trigger) -- let the user know they can create more manually, though.
     if (getConfig('trigger') !== undefined) {
         console.log(warn('crbt only supports creating one (1) trigger. Additional triggers can be created manually without crbt.'));
         console.log(failure('Existing trigger has already been created. Exiting...'));
@@ -70,22 +71,29 @@ const schedulerCreate = async function(options) {
     }
 
     // Enable the Cloud Scheduler and App Engine APIs
-    enableAPI('cloudscheduler', options.dryrun, options.verbose);
-    enableAPI('appengine', options.dryrun, options.verbose);
+    enableAPI('cloudscheduler', options.verbose, options.dryrun);
+    enableAPI('appengine', options.verbose, options.dryrun);
 
-    // Check & enable App Engine app which is required for Cloud Scheduler
-    checkAppEngineApp(region, options.verbose);
+    // Check & create an App Engine app if one does not exist; an App Engine app is required for Cloud Scheduler.
+    checkAppEngineApp(region, options.verbose, options.dryrun);
 
     // If unauthenticated invocations are not allowed, we have to use a service account to invoke the service.
     if (allowUnauthenticated === false) {
         if (!options.account) options.account = await determineServiceAccount();
-        else console.log(success('Using service account: ') + varFmt(options.account));
+        else console.log(success('Detected service account name: ') + varFmt(options.account));
+
+        if (options.account.length < 6 || options.account.length > 30 || !options.account.match(/^[a-z0-9]+$/)) {
+            console.log(failure('Service account name must be between 6 and 30 characters (inclusive), must begin with a lowercase letter, and consist of lowercase alphanumeric characters that can be separated by hyphens.'));
+            process.exit(1);
+        }
 
         // Convert simple name to full email-based name.
         options.account = options.account + '@' + project + '.iam.gserviceaccount.com';
 
+        // Check if account already exists, if not then create it.
         await checkServiceAccount(options.account, options.verbose, options.dryrun);
 
+        // Add IAM Policy Binding to the Cloud Run service to allow the service account to invoke it.
         let iamCommand;
         if (platform === 'managed') {
             iamCommand = ['run', 'services', 'add-iam-policy-binding', serviceName, '--member=serviceAccount:' + options.account, '--role=roles/run.invoker', '--platform=managed', '--region=' + region];
@@ -115,6 +123,7 @@ const schedulerCreate = async function(options) {
     if (!options.schedule) options.schedule = await determineSchedule();
     else console.log(success('Using schedule: ') + varFmt(options.schedule));
 
+    // Cloud Scheduler HTTP invocations can be GET, PUT, or POST -- determine which the user wants.
     if (!options.method) options.method = await determineHttpMethod();
     else console.log(success('Using method: ') + varFmt(options.method));
 
@@ -142,7 +151,7 @@ const schedulerCreate = async function(options) {
         }
         if (createScheduler.status === 0) {
             console.log(success('Cloud Scheduler trigger created.'));
-            await saveConfig('trigger', 'serviceAccount', options.account);
+            if (allowUnauthenticated === false) await saveConfig('trigger', 'serviceAccount', options.account);
             await saveConfig('trigger', 'name', jobName);
             await saveConfig('trigger', 'type', 'scheduler');
         } else {
@@ -153,12 +162,14 @@ const schedulerCreate = async function(options) {
 };
 
 /**
- * @returns {boolean} - App found true/false.
+ * Check if an App Engine App exists or not -- this is required for Cloud Scheduler.
+ * @param {string} region - GCP region.
+ * @param {boolean} verbose - Verbosity.
+ * @param {boolean} dryrun - Perform the actions or simply do a dry tun test and display what would be done.
  */
-function checkAppEngineApp(region, verbose) {
+function checkAppEngineApp(region, verbose, dryrun) {
     return new Promise(async (resolve, reject) => {
         let command = ['app', 'describe'];
-
         const checkAppEngine = spawn('gcloud', command);
         if (verbose) {
             if (checkAppEngine.stdout.toString('utf8') !== '') console.log(checkAppEngine.stdout.toString('utf8'));
@@ -169,18 +180,29 @@ function checkAppEngineApp(region, verbose) {
             return resolve();
         } else {
             console.log(warn('App Engine app not found (required for Cloud Scheduler). Attempting to create...'));
-            enableAppEngineApp(region, verbose);
+            enableAppEngineApp(region, verbose, dryrun);
             return resolve();
         }
     });
 }
 
-function enableAppEngineApp(region, verbose) {
+/**
+ * Create an App Engine app, which is required to use Cloud Scheduler. Creates it within the region chosen for Cloud Run service.
+ * @param {string} region - GCP region to use.
+ * @param {boolean} verbose - Verbosity.
+ * @param {boolean} dryrun - Perform the actions or simply do a dry tun test and display what would be done.
+ */
+function enableAppEngineApp(region, verbose, dryrun) {
     // App Engine locations have a few anomalies (i.e. us-central1 is us-central, and europe-west1 is europe-west) that we need to account for.
     if (region === 'us-central1') region = 'us-central';
     if (region === 'europe-west1') region = 'europe-west';
 
     let command = ['app', 'create', '--region=' + region];
+
+    if (dryrun) {
+        displayCommand('gcloud', command);
+        return;
+    }
 
     const createAppEngineApp = spawn('gcloud', command);
     if (verbose) {
@@ -239,7 +261,12 @@ function createServiceAccount(serviceAccount, verbose, dryrun) {
     return new Promise(async (resolve, reject) => {
         let serviceName = getConfig('name');
 
-        let command = ['iam', 'service-accounts', 'create', serviceName + '-invoker', '--display-name="Invoker for ' + serviceName + ' Cloud Run Service"'];
+        let command = ['iam', 'service-accounts', 'create', serviceAccount.split('@')[0], '--display-name', serviceName + ' Invoker'];
+
+        if (dryrun) {
+            displayCommand('gcloud', command);
+            return;
+        }
 
         const accountCreate = spawn('gcloud', command);
         if (verbose) {

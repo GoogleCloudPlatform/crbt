@@ -17,13 +17,9 @@
 'use strict';
 
 const spawn = require('child_process').spawnSync;
-const fs = require('fs-extra');
-const inquirer = require('inquirer');
-const enableAPI = require('../../../lib/enableAPI');
 
-const displayCommand = require('../../../lib/displayCommand');
-const { success, warn, failure, header, questionPrefix, varFmt, clc } = require('../../../lib/colorScheme');
-const { saveConfig, getConfig, removeConfigSection } = require('../../../lib/parseConfig');
+const { success, warn, failure, header, varFmt, clc } = require('../../../lib/colorScheme');
+const { getConfig, removeConfigSection } = require('../../../lib/parseConfig');
 
 /**
  * Create a Cloud Scheduler trigger to call the Cloud Run service on an interval.
@@ -32,7 +28,12 @@ const { saveConfig, getConfig, removeConfigSection } = require('../../../lib/par
 const schedulerDelete = async function(options) {
     console.log(header('\n=== Cloud Scheduler Trigger Deletion\n'));
 
-    if (getConfig('trigger', 'type') !== 'scheduler') {
+    let triggerType = getConfig('trigger', 'type');
+
+    if (triggerType === undefined) {
+        console.log(failure('No trigger detected. Exiting...'));
+        process.exit(1);
+    } else if (triggerType !== 'scheduler') {
         console.log(failure('The trigger created is not a Cloud Scheduler trigger. Exiting...'));
         process.exit(1);
     }
@@ -41,24 +42,20 @@ const schedulerDelete = async function(options) {
 
     let command = ['scheduler', 'jobs', 'delete', jobName, '--quiet'];
 
-    if (options.dryrun) {
-        displayCommand('gcloud', command);
+    const deleteScheduler = spawn('gcloud', command);
+    if (options.verbose) {
+        if (deleteScheduler.stdout.toString('utf8') !== '') console.log(deleteScheduler.stdout.toString('utf8'));
+        if (deleteScheduler.stderr.toString('utf8') !== '') console.log(deleteScheduler.stderr.toString('utf8'));
+    }
+    if (deleteScheduler.status === 0) {
+        let serviceAccount = getConfig('trigger', 'serviceAccount');
+        console.log(success('Cloud Scheduler job deleted: ' + varFmt(jobName)));
+        console.log(warn('The following service account was used: ' + varFmt(serviceAccount)));
+        console.log(warn('If the service account is no longer needed, remove it manually with: ' + clc.yellow('gcloud iam service-accounts delete ' + serviceAccount)));
+        await removeConfigSection('trigger').catch((e) => {});
     } else {
-        const deleteScheduler = spawn('gcloud', command);
-        if (options.verbose) {
-            if (deleteScheduler.stdout.toString('utf8') !== '') console.log(deleteScheduler.stdout.toString('utf8'));
-            if (deleteScheduler.stderr.toString('utf8') !== '') console.log(deleteScheduler.stderr.toString('utf8'));
-        }
-        if (deleteScheduler.status === 0) {
-            let serviceAccount = getConfig('trigger', 'serviceAccount');
-            console.log(success('Cloud Scheduler job deleted: ' + varFmt(jobName)));
-            console.log(warn('The following service account was used: ' + varFmt(serviceAccount)));
-            console.log(warn('If the service account is no longer needed, remove it manually with: ' + clc.yellow('gcloud iam service-accounts delete ' + serviceAccount)));
-            await removeConfigSection('trigger').catch((e) => {});
-        } else {
-            console.log(failure('Cloud Scheduler job deletion failed.'));
-            process.exit(1);
-        }
+        console.log(failure('Cloud Scheduler job deletion failed.'));
+        process.exit(1);
     }
 };
 
