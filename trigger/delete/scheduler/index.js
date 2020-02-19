@@ -49,9 +49,11 @@ const schedulerDelete = async function(options) {
     }
     if (deleteScheduler.status === 0) {
         let serviceAccount = getConfig('trigger', 'serviceAccount');
-        console.log(success('Cloud Scheduler job deleted: ' + varFmt(jobName)));
-        console.log(warn('The following service account was used: ' + varFmt(serviceAccount)));
-        console.log(warn('If the service account is no longer needed, remove it manually with: ' + clc.yellow('gcloud iam service-accounts delete ' + serviceAccount)));
+        if (serviceAccount !== undefined) {
+            console.log(success('Cloud Scheduler job deleted: ' + varFmt(jobName)));
+            console.log(warn('The following service account was used: ' + varFmt(serviceAccount)));
+            console.log(warn('If the service account is no longer needed, remove it manually with: ' + clc.yellow('gcloud iam service-accounts delete ' + serviceAccount)));
+        }
         await removeConfigSection('trigger').catch((e) => {});
     } else {
         console.log(failure('Cloud Scheduler job deletion failed.'));

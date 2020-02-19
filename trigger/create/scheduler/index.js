@@ -36,7 +36,11 @@ const schedulerCreate = async function(options) {
     let serviceUrl = getConfig('cloudrun', serviceName);
     let platform = getConfig('platform');
     let project = getConfig('project', 'name');
-    let allowUnauthenticated = getConfig('options', 'allow-unauthenticated');
+
+    let allowUnauthenticated;
+    // allowUnauthenticated is not applicable to gke with crbt.
+    if (platform === 'gke') allowUnauthenticated = true;
+    else allowUnauthenticated = getConfig('options', 'allow-unauthenticated');
 
     // We rely on this being a crbt project for configuration parameters, so exit if anything is missing. No successful, valid deployment should be missing these.
     if (serviceName === undefined || allowUnauthenticated === undefined || serviceName === undefined || platform === undefined || project === undefined || serviceUrl === undefined) {

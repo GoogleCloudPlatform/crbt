@@ -8,10 +8,14 @@ All notable changes to this project will be documented in this file.
 
 -   Added the `trigger:create:scheduler` and `trigger:delete:scheduler` commands to allow creating/deleting a Cloud Scheduler job to trigger the Cloud Run service. This supports both authenticated and unauthenticated invocations, and will create/setup service account as needed. `trigger:delete:scheduler` is invoked automatically with `crwt destroy`. This is the first of other potential trigger:[create/delete]:{method} triggers.
 -   Updated the `backend-gcloud-dataflow` template's README.md to utilize `trigger:create:scheduler`.
--   Changed the way the `cloudrun` section within the `.crbt` configuration file is stored. Previously used a more complex approach based on earlier prototype approaches. The `parseConfig` library and references were updated to reflect.
 -   Documentation and formatting fixes.
 -   Re-ordered commands in help to be alphabetized in list (excluding init).
 -   Built in the initial deploy call from `crbt init` to `crbt deploy` which previously required manual execution.
+
+### Fixed
+
+-   Resolved an issue where sufficient permissions were not granted to Cloud Build service account with GKE.
+-   Changed the way the `cloudrun` section within the `.crbt` configuration file is stored. Previously used a more complex approach based on earlier prototype approaches. The `parseConfig` library and references were updated to reflect.
 
 ## [0.1.1] - 2020-02-13
 
