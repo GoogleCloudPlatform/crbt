@@ -51,7 +51,7 @@ Sure!
 
 #### First, the initialization inside an entirely new project:
 
-![Example usage of `crbt init`](https://github.com/earlgay/crbt/raw/master/assets/crbt_init.gif)
+![Example usage of `crbt init`](https://github.com/GoogleCloudPlatform/crbt/raw/master/assets/crbt_init.gif)
 
 Well, that seemed simple... what all did we do behind the scenes?
 
@@ -78,11 +78,11 @@ Cool, but what if I didn't want to do that interactively, but use those same par
 
 #### Now that's done, let's get to coding -- then let the automatic build process that crbt created take care of the update process after commit:
 
-![Example of automatic update](https://github.com/earlgay/crbt/raw/master/assets/crbt_update.gif)
+![Example of automatic update](https://github.com/GoogleCloudPlatform/crbt/raw/master/assets/crbt_update.gif)
 
 #### Let's clean it all up and remove the services we created:
 
-![Example of `crwt destroy`](https://github.com/earlgay/crbt/raw/master/assets/crbt_destroy.gif)
+![Example of `crwt destroy`](https://github.com/GoogleCloudPlatform/crbt/raw/master/assets/crbt_destroy.gif)
 
 See more examples in the [Examples](#Examples) section below..
 
@@ -90,7 +90,7 @@ See more examples in the [Examples](#Examples) section below..
 
 ### Releases
 
-Binaries are available through [Releases](https://github.com/earlgay/crbt/releases).
+Binaries are available through [Releases](https://github.com/GoogleCloudPlatform/crbt/releases).
 
 ### Testing
 
