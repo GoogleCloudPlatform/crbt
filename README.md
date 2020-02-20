@@ -1,6 +1,6 @@
 # crbt ![Node Version](https://img.shields.io/static/v1?label=node&message=%3E10&color=brightgreen) ![Google Cloud SDK Version](https://img.shields.io/static/v1?label=GoogleCloudSDK&message=%3E272.0.0&color=blue)
 
-___**Foreword: This code was developed as a simple wrapper around the [Google Cloud SDK](https://cloud.google.com/sdk). It does not provide support for the full feature-set of the Cloud Run solution or SDK, and should not be considered an official project from any product team. It is provided as-is, without warranty or representation for any use or purpose.**___
+**Note: This tool is not officially part of the Cloud Run product and provided as-is as a convenience utility for getting started. Google does not guarantee long-term maintenance for this project.**
 
 (c)loud (r)un (b)ootstrap (t)ool can be used to simplify initialization of Cloud Run applications along with supporting Google Cloud services. The core goal of crbt is to provide a super easy way to setup a Cloud Run project that has source code management and CI/CD so that you can just focus on your code (and will even give you some template code to get you started, if desired).
 
