@@ -23,20 +23,21 @@ const dns = require('dns');
 const Spinner = require('cli-spinner').Spinner;
 
 const displayCommand = require('../../lib/displayCommand');
-const { saveConfig } = require('../../lib/parseConfig');
+const { saveConfig, getConfig } = require('../../lib/parseConfig');
 const { success, warn, failure, header, varFmt, questionPrefix, clc } = require('../../lib/colorScheme');
+const { checkFileExists } = require('../../lib/checkPrereqs.js');
 
 let customizationFile = 'app.json';
+let configFile = '.crbt';
 
 /**
  * Handle creation of a custom domain mapping for a Cloud Run Service.
  * Feature Overview: https://cloud.google.com/run/docs/mapping-custom-domains
  * @param {object} options - Initialized from commander.js.
- * @returns {boolean} - Returns true if domain is mapped successfully.
  */
 const domain = async (options) => {
     return new Promise(async (resolve, reject) => {
-        console.log(header('\n=== Domain Mapping Setup\n'));
+        console.log(header('\n=== Domain Mapping Customization\n'));
 
         // Check if customization specifies mapping, if so then set it (but only check if it's not specified as an argument)
         // Map in customization should only really ever be set if a .crbt was used to restore a service.
@@ -46,10 +47,20 @@ const domain = async (options) => {
             } catch (e) {}
         }
 
+        if (checkFileExists(configFile)) {
+            options.name = Object.keys(await getConfig('cloudrun'))[0];
+            options.region = await getConfig('region');
+        } else {
+            if (options.name === undefined || options.region === undefined) {
+                console.log(failure('No existing configuration (' + varFmt(configFile) + ') and --name/--region undefined. Exiting...'));
+                process.exit(1);
+            }
+        }
+
         if (options.map === 'none' || options.platform === 'gke') {
             console.log(success('Skipping custom domain setup...'));
             await saveConfig('mapping', 'none');
-            return resolve(false);
+            return resolve();
         }
 
         if (options.map) {
@@ -63,7 +74,7 @@ const domain = async (options) => {
             } else {
                 console.log(failure('The domain chosen is not verified. This can be done with: gcloud domains verify ' + varFmt('example.com') + '\n'));
             }
-            return resolve(domainMapped);
+            return resolve();
         }
 
         // Check if wanting to use custom domain.
@@ -84,7 +95,7 @@ const domain = async (options) => {
                     if (options.map == 'none') {
                         console.log(success('Skipping custom domain setup...'));
                         await saveConfig('mapping', 'none');
-                        return resolve(false);
+                        return resolve();
                     }
                     let domainMapped = false;
                     if (checkDomainVerified(options.map)) {
@@ -96,11 +107,12 @@ const domain = async (options) => {
                     } else {
                         console.log(failure('The domain chosen is not verified. This can be done with: ' + clc.yellow('gcloud domains verify ') + varFmt('example.com') + ' -- Skipping domain mapping...\n'));
                     }
-                    return resolve(domainMapped);
+                    if (!options.dryrun) console.log(success(header('Domain-mapped URL: ') + clc.greenBright.underline('https://' + options.map)));
+                    return resolve();
                 } else {
                     console.log(success('Skipping custom domain mapping...'));
                     await saveConfig('mapping', 'none');
-                    return resolve(false);
+                    return resolve();
                 }
             });
     });
