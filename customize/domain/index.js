@@ -22,6 +22,7 @@ const spawn = require('child_process').spawnSync;
 const dns = require('dns');
 const Spinner = require('cli-spinner').Spinner;
 
+const domainDestroy = require('../../destroy/domain/index');
 const displayCommand = require('../../lib/displayCommand');
 const { saveConfig, getConfig } = require('../../lib/parseConfig');
 const { success, warn, failure, header, varFmt, questionPrefix, clc } = require('../../lib/colorScheme');
@@ -50,6 +51,14 @@ const domain = async (options) => {
         if (checkFileExists(configFile)) {
             options.name = Object.keys(await getConfig('cloudrun'))[0];
             options.region = await getConfig('region');
+
+            // Handle removing all mappings if asked to set mapping to 'none' and mappings already exist.
+            let mapping = getConfig('mapping');
+            if (options.map === 'none' && Array.isArray(mapping)) {
+                await domainDestroy(options);
+                await saveConfig('mapping', 'none');
+                return resolve();
+            } 
         } else {
             if (options.name === undefined || options.region === undefined) {
                 console.log(failure('No existing configuration (' + varFmt(configFile) + ') and --name/--region undefined. Exiting...'));
@@ -64,10 +73,9 @@ const domain = async (options) => {
         }
 
         if (options.map) {
-            let domainMapped = false;
             if (checkDomainVerified(options.map)) {
                 if (await checkDNSSetup(options.map).catch((e) => {})) {
-                    domainMapped = await createDomainMapping(options.map, options.name, options.region, options.verbose, options.dryrun).catch((e) => {});
+                    await createDomainMapping(options.map, options.name, options.region, options.verbose, options.dryrun).catch((e) => {});
                 } else {
                     console.log(failure('The domain chosen does not have DNS configured properly. Please configure a CNAME entry for ' + varFmt(options.map) + ' to ' + varFmt('ghs.googlehosted.com') + '\n'));
                 }
@@ -97,10 +105,9 @@ const domain = async (options) => {
                         await saveConfig('mapping', 'none');
                         return resolve();
                     }
-                    let domainMapped = false;
                     if (checkDomainVerified(options.map)) {
                         if (await checkDNSSetup(options.map).catch((e) => {})) {
-                            domainMapped = await createDomainMapping(options.map, options.name, options.region, options.verbose, options.dryrun).catch((e) => {});
+                            await createDomainMapping(options.map, options.name, options.region, options.verbose, options.dryrun).catch((e) => {});
                         } else {
                             console.log(failure('The domain chosen does not have DNS configured properly. Please configure a CNAME entry for ' + varFmt(options.map) + ' to ' + varFmt('ghs.googlehosted.com') + ' -- Skipping domain mapping...\n'));
                         }
@@ -188,7 +195,15 @@ const createDomainMapping = function(domain, service, region, verbose, dryrun) {
 
         if (dryrun) {
             displayCommand('gcloud', command);
-            await saveConfig('mapping', domain);
+
+            let mapping = getConfig('mapping');
+            if (Array.isArray(mapping)) {
+                mapping.push(domain);
+            } else {
+                mapping = [];
+                mapping.push(domain);
+            }
+            await saveConfig('mapping', mapping);
             return resolve(true);
         }
 
@@ -201,7 +216,15 @@ const createDomainMapping = function(domain, service, region, verbose, dryrun) {
 
         if (mapDomain.status === 0) {
             console.log(success('Successfully mapped ' + varFmt(service) + ' to ' + varFmt(domain)));
-            await saveConfig('mapping', domain);
+            let mapping = getConfig('mapping');
+            if (Array.isArray(mapping)) {
+                mapping.push(domain);
+            } else {
+                mapping = [];
+                mapping.push(domain);
+            }
+
+            await saveConfig('mapping', mapping);
 
             let spinner = new Spinner(warn('Waiting for certificate provisioning... %s '));
             spinner.setSpinnerString('|/-\\');
@@ -221,6 +244,7 @@ const createDomainMapping = function(domain, service, region, verbose, dryrun) {
                     spinner.stop();
                     console.log('\n');
                     certProvisioned = true;
+                    console.log(success('Certificate successfully provisioned for: ' + clc.greenBright.underline('https://' + domain)));
                     return resolve(true);
                 }
                 await sleep(3000); // Sleep for 3 seconds between checks just to avoid spamming requests.
