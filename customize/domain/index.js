@@ -58,7 +58,7 @@ const domain = async (options) => {
                 await domainDestroy(options);
                 await saveConfig('mapping', 'none');
                 return resolve();
-            } 
+            }
         } else {
             if (options.name === undefined || options.region === undefined) {
                 console.log(failure('No existing configuration (' + varFmt(configFile) + ') and --name/--region undefined. Exiting...'));
@@ -74,26 +74,37 @@ const domain = async (options) => {
 
         if (options.map) {
             if (checkDomainVerified(options.map)) {
-                if (await checkDNSSetup(options.map).catch((e) => {})) {
-                    await createDomainMapping(options.map, options.name, options.region, options.verbose, options.dryrun).catch((e) => {});
+                if (options.map.split('.').length > 2) {
+                    // If >2 then it's a subdomain and DNS is handled with CNAME entries, and easy to check DNS is setup properly.
+                    if (await checkDNSSetup(options.map).catch((e) => {})) {
+                        await createDomainMapping(options.map, options.name, options.region, options.verbose, options.dryrun).catch((e) => {});
+                    } else {
+                        console.log(failure('The domain chosen does not have DNS configured properly. Please configure a CNAME entry for ' + varFmt(options.map) + ' to ' + varFmt('ghs.googlehosted.com') + ' -- Skipping domain mapping...\n'));
+                    }
                 } else {
-                    console.log(failure('The domain chosen does not have DNS configured properly. Please configure a CNAME entry for ' + varFmt(options.map) + ' to ' + varFmt('ghs.googlehosted.com') + '\n'));
+                    // This means its a root domain and has to be handled differently with less automatic checks.
+                    console.log(warn('The domain to be mapped is a root domain, and DNS configuration verification cannot be done.'));
+                    await createDomainMapping(options.map, options.name, options.region, options.verbose, options.dryrun).catch((e) => {});
                 }
             } else {
                 console.log(failure('The domain chosen is not verified. This can be done with: gcloud domains verify ' + varFmt('example.com') + '\n'));
             }
+            if (!options.dryrun) console.log(success(header('Domain-mapped URL: ') + clc.greenBright.underline('https://' + options.map)));
             return resolve();
         }
 
         // Check if wanting to use custom domain.
         console.log(warn('You can use a custom domain rather than the default address that Cloud Run provides for a deployed service. This requires a previously verified domain.'));
+        // We change message based on entrypoint (if mapping in config is undefined it's from a new initialization, if not then it's a customization)
+        let customMapMsgText = 'Do you have a verified domain and want to map it as an entrypoint?';
+        if (getConfig('mapping') !== undefined) customMapMsgText = 'Do you have a verified domain and want to map it as an entrypoint (or want to remove all existing mappings)?';
         inquirer
             .prompt([
                 {
                     type: 'list',
                     name: 'customMap',
                     prefix: questionPrefix,
-                    message: 'Do you have a previously verified domain and want to map it as the entrypoint?',
+                    message: customMapMsgText,
                     choices: ['Yes', 'No']
                 }
             ])
@@ -101,15 +112,30 @@ const domain = async (options) => {
                 if (answers.customMap == 'Yes') {
                     options.map = await getMappingAddress();
                     if (options.map == 'none') {
-                        console.log(success('Skipping custom domain setup...'));
-                        await saveConfig('mapping', 'none');
-                        return resolve();
+                        // Handle removing all mappings if asked to set mapping to 'none' and mappings already exist.
+                        let mapping = getConfig('mapping');
+                        if (Array.isArray(mapping)) {
+                            await domainDestroy(options);
+                            await saveConfig('mapping', 'none');
+                            return resolve();
+                        } else {
+                            console.log(success('No existing domain mappings found, so nothing removed.'));
+                            await saveConfig('mapping', 'none');
+                            return resolve();
+                        }
                     }
                     if (checkDomainVerified(options.map)) {
-                        if (await checkDNSSetup(options.map).catch((e) => {})) {
-                            await createDomainMapping(options.map, options.name, options.region, options.verbose, options.dryrun).catch((e) => {});
+                        if (options.map.split('.').length > 2) {
+                            // If >2 then it's a subdomain and DNS is handled with CNAME entries, and easy to check DNS is setup properly.
+                            if (await checkDNSSetup(options.map).catch((e) => {})) {
+                                await createDomainMapping(options.map, options.name, options.region, options.verbose, options.dryrun).catch((e) => {});
+                            } else {
+                                console.log(failure('The domain chosen does not have DNS configured properly. Please configure a CNAME entry for ' + varFmt(options.map) + ' to ' + varFmt('ghs.googlehosted.com') + ' -- Skipping domain mapping...\n'));
+                            }
                         } else {
-                            console.log(failure('The domain chosen does not have DNS configured properly. Please configure a CNAME entry for ' + varFmt(options.map) + ' to ' + varFmt('ghs.googlehosted.com') + ' -- Skipping domain mapping...\n'));
+                            // This means its a root domain and has to be handled differently with less automatic checks.
+                            console.log(warn('The domain to be mapped is a root domain, and DNS configuration verification cannot be done.'));
+                            await createDomainMapping(options.map, options.name, options.region, options.verbose, options.dryrun).catch((e) => {});
                         }
                     } else {
                         console.log(failure('The domain chosen is not verified. This can be done with: ' + clc.yellow('gcloud domains verify ') + varFmt('example.com') + ' -- Skipping domain mapping...\n'));
@@ -118,7 +144,11 @@ const domain = async (options) => {
                     return resolve();
                 } else {
                     console.log(success('Skipping custom domain mapping...'));
-                    await saveConfig('mapping', 'none');
+
+                    let mapping = getConfig('mapping');
+                    if (mapping === undefined) {
+                        await saveConfig('mapping', 'none');
+                    }
                     return resolve();
                 }
             });
@@ -130,13 +160,16 @@ const domain = async (options) => {
  */
 function getMappingAddress() {
     return new Promise(async (resolve, reject) => {
+        // We change message based on entrypoint (if mapping in config is undefined it's from a new initialization, if not then it's a customization)
+        let mapAddMsgText = 'What custom domain would you like to add? (Enter `none` to cancel)';
+        if (getConfig('mapping') !== undefined) mapAddMsgText = 'What custom domain would you like to add? (Enter `none` to remove all mappings)';
         inquirer
             .prompt([
                 {
                     type: 'input',
                     name: 'mappingAddress',
                     prefix: questionPrefix,
-                    message: 'What custom domain would you like to use? (Enter `none` to cancel)'
+                    message: mapAddMsgText
                 }
             ])
             .then(async function(answers) {
@@ -226,28 +259,35 @@ const createDomainMapping = function(domain, service, region, verbose, dryrun) {
 
             await saveConfig('mapping', mapping);
 
-            let spinner = new Spinner(warn('Waiting for certificate provisioning... %s '));
-            spinner.setSpinnerString('|/-\\');
-            spinner.start();
+            if (domain.split('.').length === 2) {
+                // If 2 then it's a root domain that needs IP mapping versus CNAME.
+                console.log(warn('Please follow the steps within ' + varFmt('https://cloud.google.com/run/docs/mapping-custom-domains#dns_update') + ' to setup DNS. After completion, Cloud Run will provision an SSL certificate for the domain.'));
+                console.log(warn('Until DNS is setup and an SSL certificate is automatically provisioned, the domain mapping will not work.'));
+                return resolve(true);
+            } else {
+                let spinner = new Spinner(warn('Waiting for certificate provisioning... %s '));
+                spinner.setSpinnerString('|/-\\');
+                spinner.start();
 
-            let certProvisioned = false;
-            while (!certProvisioned) {
-                certProvisioned = true;
-                // Cloud SDK Reference: https://cloud.google.com/sdk/gcloud/reference/beta/run/services/
-                let checkMapping = spawn('gcloud', ['beta', 'run', 'domain-mappings', 'describe', '--domain', domain, '--platform', 'managed', '--region', region])
-                    .stdout.toString('utf8')
-                    .split('\n');
-                for (let i = 0; i < checkMapping.length; i++) {
-                    if (checkMapping[i].includes('Waiting for certificate')) certProvisioned = false;
-                }
-                if (certProvisioned) {
-                    spinner.stop();
-                    console.log('\n');
+                let certProvisioned = false;
+                while (!certProvisioned) {
                     certProvisioned = true;
-                    console.log(success('Certificate successfully provisioned for: ' + clc.greenBright.underline('https://' + domain)));
-                    return resolve(true);
+                    // Cloud SDK Reference: https://cloud.google.com/sdk/gcloud/reference/beta/run/services/
+                    let checkMapping = spawn('gcloud', ['beta', 'run', 'domain-mappings', 'describe', '--domain', domain, '--platform', 'managed', '--region', region])
+                        .stdout.toString('utf8')
+                        .split('\n');
+                    for (let i = 0; i < checkMapping.length; i++) {
+                        if (checkMapping[i].includes('Waiting for certificate')) certProvisioned = false;
+                    }
+                    if (certProvisioned) {
+                        spinner.stop();
+                        console.log('\n');
+                        certProvisioned = true;
+                        console.log(success('Certificate successfully provisioned.'));
+                        return resolve(true);
+                    }
+                    await sleep(3000); // Sleep for 3 seconds between checks just to avoid spamming requests.
                 }
-                await sleep(3000); // Sleep for 3 seconds between checks just to avoid spamming requests.
             }
         } else {
             console.log(failure('Failed to map ' + varFmt(service) + ' to ' + varFmt(domain) + '\n'));

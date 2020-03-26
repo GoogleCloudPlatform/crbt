@@ -4,9 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## In-Progress
 
-- Moved current `customize` into `customize:envvars` and added `customize:domain` to allow for setting domain outside of just during `init`.
-- Domain mapping now allows more than one mapping.
-- Domain mapping now allows removing mappings with `customize:domain` and a mapping back to `none`.
+-   Moved current `customize` into `customize:envvars` and added `customize:domain` to allow for setting domain outside of just during `init`.
+-   Domain mapping now allows more than one mapping.
+-   Domain mapping now allows removing mappings with `customize:domain` and a mapping back to `none`.
+-   Added ability to handle mapping of root domains.
 
 ## [0.1.2] - 2020-02-19
 

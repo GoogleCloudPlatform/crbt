@@ -48,6 +48,7 @@ const domain = async (options) => {
             if (!options.preserve) await removeConfigSection('mapping').catch((e) => {});
         } else {
             console.log(warn('No custom domain mappings found in config file. Skipping...\n'));
+            if (!options.preserve) await removeConfigSection('mapping').catch((e) => {});
         }
         return resolve();
     });
