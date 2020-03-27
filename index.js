@@ -58,8 +58,6 @@ program
 program
     .command('customize:envvars')
     .description('Reconfigure environment variables for the service')
-    .option('-n, --name [name]', 'Application name (default: current directory name)')
-    .option('-r, --region [region]', 'GCP Region [asia-northeast1, europe-west1, us-central1, us-east1]')
     .option('-v, --verbose', 'Verbose mode')
     .action((options) => {
         envvars(options, true);
@@ -70,8 +68,6 @@ program
     .command('customize:domain')
     .description('Reconfigure domain name mapping for the service')
     .option('-m, --map [domain]', 'Map a custom domain to the service (platform-specific: managed) [<domain>, none]')
-    .option('-n, --name [name]', 'Application name (default: current directory name)')
-    .option('-r, --region [region]', 'GCP Region [asia-northeast1, europe-west1, us-central1, us-east1]')
     .option('-v, --verbose', 'Verbose mode')
     .action((options) => {
         domain(options, true);

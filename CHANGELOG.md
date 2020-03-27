@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## In-Progress
+## [0.1.3] - 2020-03-27
 
 -   Moved current `customize` into `customize:envvars` and added `customize:domain` to allow for setting domain outside of just during `init`.
 -   Domain mapping now allows more than one mapping.

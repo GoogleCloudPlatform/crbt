@@ -127,7 +127,8 @@ Below is a brief list of the available commands and their function:
 | Command                      | Description                                                                                                                                                                                                                                         |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **init**                     | Setup a new application in the current directory. This command will create a `crbt.conf` configuration file in your current directory. It will also look for an `app.json` for customization parameters.                                            |
-| **customize**                | Re-parse the `app.json` file, and re-prompt for environment variables.                                                                                                                                                                              |
+| **customize:domain**         | Add or remove custom domain mappings.                                                                                                                                                                                                               |
+| **customize:envvars**        | Re-parse the `app.json` file, and re-prompt for environment variables.                                                                                                                                                                              |
 | **deploy**                   | Deploys the Cloud Run service within the current directory. Relies on a `cloudbuild.yaml` file and the local project directory. This is the method to deploy the service if automatic Cloud Build triggers were not selected during initialization. |
 | **destroy** [feature]        | Destroys deployed services, but does not delete local code. [feature] can be `all` (Default) or `cloudrun`.                                                                                                                                         |
 | **list**                     | List available built-in templates for Cloud Run services.                                                                                                                                                                                           |
@@ -155,14 +156,27 @@ Usage without all flags defined (either through command-line arguments or `app.j
 | **-s, --sourcerepo** [repoUrl] | Git repository URL for project source to copy. Should be in format such as `https://github.com/GoogleCloudPlatform/cloud-run-hello.git`. This is mutually exclusive with `--template`. |
 | **-l, --local**                | Use local source within current directory.                                                                                                                                             |
 | **-b, --build** [trigger]      | Use Cloud Build build trigger; [trigger] can be `commit` to build and deploy on commit or `none` to not automatically perform any Cloud Build activities.                              |
-| **-m, --map** [mapping]        | Create custom domain mapping for Cloud Run service. `none` to skip prompt. (platform-specific: managed)                                                                                |
+| **-m, --map** [domain]         | Create custom domain mapping for Cloud Run service. `none` to skip prompt. (platform-specific: managed)                                                                                |
 | **-e, --existing**             | Allow existing files to exist in the project directory (Typically, `--template` wants things to be empty.)                                                                             |
 | **-d, --dryrun**               | Only show commands and save configuration, but do not execute them in GCP.                                                                                                             |
 | **-v, --verbose**              | Verbose mode                                                                                                                                                                           |
 
-#### customize
+#### customize:domain
+
+This command allows adding or removing [custom domain mappings](https://cloud.google.com/run/docs/mapping-custom-domains) to the service.
+
+| Option                 | Description                                                                                                            |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **-m, --map** [domain] | Create custom domain mapping for Cloud Run service. `none` to remove all custom mappings. (platform-specific: managed) |
+| **-v, --verbose**      | Verbose mode                                                                                                           |
+
+#### customize:envvars
 
 This command re-parse the `app.json` file and re-prompts for environment variables, and then updates the environment variables.
+
+| Option            | Description  |
+| ----------------- | ------------ |
+| **-v, --verbose** | Verbose mode |
 
 #### deploy
 
