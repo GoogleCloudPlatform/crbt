@@ -28,7 +28,7 @@ const { success, warn, failure, header, varFmt } = require('../../lib/colorSchem
  */
 const domain = async (options) => {
     return new Promise(async (resolve, reject) => {
-        console.log(header('=== Domain Mapping Destroy\n'));
+        if (options.map === undefined) console.log(header('=== Domain Mapping Destroy\n')); // Don't show if this is called from `customize:domain`
         let mapping = null;
         try {
             mapping = getConfig('mapping');
@@ -36,17 +36,19 @@ const domain = async (options) => {
             console.log(failure('Unable to read custom domain mapping from config.'));
             return resolve();
         }
-        if (mapping !== undefined) {
-            if (mapping !== 'none') {
-                await destroyMapping(mapping, options.verbose).catch((e) => {
-                    console.log(failure('Failed to delete Custom Domain Mapping.'));
+
+        if (Array.isArray(mapping)) {
+            for (let domain in mapping) {
+                await destroyMapping(mapping[domain], options.verbose).catch((e) => {
+                    console.log(failure('Failed to delete Custom Domain Mapping: ' + mapping[domain]));
                     return resolve();
                 });
-                console.log(success('Removed Domain Mapping.'));
+                console.log(success('Removed Domain Mapping: ' + mapping[domain]));
             }
             if (!options.preserve) await removeConfigSection('mapping').catch((e) => {});
         } else {
             console.log(warn('No custom domain mappings found in config file. Skipping...\n'));
+            if (!options.preserve) await removeConfigSection('mapping').catch((e) => {});
         }
         return resolve();
     });

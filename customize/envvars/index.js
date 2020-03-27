@@ -22,9 +22,9 @@ const fs = require('fs');
 const inquirer = require('inquirer');
 const spawn = require('child_process').spawnSync;
 
-const { success, warn, failure, header, questionPrefix, varFmt, clc } = require('../lib/colorScheme');
-const { checkFileExists } = require('../lib/checkPrereqs.js');
-const { saveConfig, getConfig } = require('../lib/parseConfig');
+const { success, warn, failure, header, questionPrefix, varFmt, clc } = require('../../lib/colorScheme');
+const { checkFileExists } = require('../../lib/checkPrereqs.js');
+const { saveConfig, getConfig } = require('../../lib/parseConfig');
 
 let customizationFile = 'app.json';
 let configFile = '.crbt';
@@ -34,9 +34,9 @@ let configFile = '.crbt';
  * @param {object} options - Initialized from commander.js.
  * @param {Boolean} rePrompt - Force re-prompting for set variables (i.e. if the app.json specifies a value versus an object). This is always true when ran from `crbt customize`.
  */
-const customize = async (options, rePrompt) => {
+const envvars = async (options, rePrompt) => {
     return new Promise(async (resolve, reject) => {
-        console.log(header('\n=== Customization Configuration\n'));
+        console.log(header('\n=== Environment Variable Customization\n'));
 
         if (checkFileExists(customizationFile) === false) {
             console.log(warn('No customization file ' + varFmt(customizationFile) + ' detected. Skipping...'));
@@ -153,4 +153,4 @@ function promptEnv(envPrompt) {
     });
 }
 
-module.exports = customize;
+module.exports = envvars;

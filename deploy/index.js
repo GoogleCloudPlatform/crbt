@@ -19,7 +19,7 @@
 const spawn = require('child_process').spawn;
 const fs = require('fs-extra');
 
-const customize = require('../customize/index');
+const customize = require('../customize/envvars/index');
 const findServices = require('../lib/findServices');
 const { success, failure, header, clc } = require('../lib/colorScheme');
 const { checkFileExists } = require('../lib/checkPrereqs.js');

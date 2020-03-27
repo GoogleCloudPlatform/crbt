@@ -23,10 +23,10 @@ const spawn = require('child_process').spawnSync;
 const csr = require('./csr/index');
 const git = require('./git/index');
 const cloudbuild = require('./cloudbuild/index');
-const domain = require('./domain/index');
 const findServices = require('../lib/findServices');
 const deploySubmit = require('../deploy/index');
-const customize = require('../customize/index');
+const envvars = require('../customize/envvars/index');
+const domain = require('../customize/domain/index');
 const { populateTemplateList } = require('../list/index');
 const enableAPI = require('../lib/enableAPI');
 
@@ -128,10 +128,9 @@ const initialize = async function(options) {
             });
         }
 
-        await customize(options).catch((e) => {});
+        await envvars(options).catch((e) => {});
 
-        let domainMapped = await domain(options); // Create domain mapping if flagged.
-        if (domainMapped && !options.dryrun) console.log(success(header('Domain-mapped URL: ') + clc.greenBright.underline('https://' + options.map)));
+        await domain(options); // Create domain mapping if flagged.
 
         if (!options.dryrun) console.log(highlight('\ncrbt initialization complete!'));
         else console.log(highlight('\ncrbt dry run complete!'));

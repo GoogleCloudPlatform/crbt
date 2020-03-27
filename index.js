@@ -24,7 +24,8 @@ const initialize = require('./init/index');
 const deploy = require('./deploy/index');
 const destroy = require('./destroy/index');
 const status = require('./status/index');
-const customize = require('./customize/index');
+const envvars = require('./customize/envvars/index');
+const domain = require('./customize/domain/index');
 const schedulerCreate = require('./trigger/create/scheduler/index');
 const schedulerDelete = require('./trigger/delete/scheduler/index');
 const { list } = require('./list/index');
@@ -45,7 +46,7 @@ program
     .option('-s, --sourcerepo [sourcerepo]', 'Git repository URL for project source to copy')
     .option('-l, --local', 'Use local source within current directory')
     .option('-b, --build [trigger]', 'Use Cloud Build build trigger [commit, none]')
-    .option('-m, --map [domain]', 'Map a custom domain to the service (platform-specific: managed)')
+    .option('-m, --map [domain]', 'Map a custom domain to the service (platform-specific: managed) [<domain>, none]')
     .option('-e, --existing', 'Allow existing files to exist in the project directory')
     .option('-d, --dryrun', 'Only show commands and save configuration, but do not execute them in GCP')
     .option('-v, --verbose', 'Verbose mode')
@@ -53,15 +54,23 @@ program
         initialize(options);
     });
 
-// Handle customization of the service, specifically relating to environment variables currently. This can be called directly via `crbt customize` or as part of the init process.
+// Handle customization of the service's environment variables.
 program
-    .command('customize')
+    .command('customize:envvars')
     .description('Reconfigure environment variables for the service')
-    .option('-n, --name [name]', 'Application name (default: current directory name)')
-    .option('-r, --region [region]', 'GCP Region [asia-northeast1, europe-west1, us-central1, us-east1]')
     .option('-v, --verbose', 'Verbose mode')
     .action((options) => {
-        customize(options, true);
+        envvars(options, true);
+    });
+
+// Handle customization of the service's domain mapping.
+program
+    .command('customize:domain')
+    .description('Reconfigure domain name mapping for the service')
+    .option('-m, --map [domain]', 'Map a custom domain to the service (platform-specific: managed) [<domain>, none]')
+    .option('-v, --verbose', 'Verbose mode')
+    .action((options) => {
+        domain(options, true);
     });
 
 // This command runs Cloud Build directly; this is primarily used when a Cloud Build trigger wasn't created to automatically run it.
