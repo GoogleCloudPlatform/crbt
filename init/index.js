@@ -39,7 +39,7 @@ let customizationFile = 'app.json';
  * Entry point to handle initialization of what to create. Definition of what to create can be done interactively or non-interactively (through cli arguments).
  * @param {object} options - Initialized from commander.js.
  */
-const initialize = async function(options) {
+const initialize = async function (options) {
     if (!options.dryrun) {
         // Perform pre-requisite checks.
         checkInstalled(['git', 'gcloud']); // Check for needed programs.
@@ -100,13 +100,9 @@ const initialize = async function(options) {
 
     await determinePlatform(options); // Find out which Cloud Run region to utilize.
 
-    let projectName = spawn('gcloud', ['config', 'get-value', 'project'])
-        .stdout.toString('utf8')
-        .trim(); // Do this after csr or csr will fail due to directory not being empty.
+    let projectName = spawn('gcloud', ['config', 'get-value', 'project']).stdout.toString('utf8').trim(); // Do this after csr or csr will fail due to directory not being empty.
     await saveConfig('project', 'name', projectName);
-    let projectIdList = spawn('gcloud', ['projects', 'list'])
-        .stdout.toString('utf8')
-        .split('\n');
+    let projectIdList = spawn('gcloud', ['projects', 'list']).stdout.toString('utf8').split('\n');
     for (let projectLine in projectIdList) {
         if (projectIdList[projectLine].includes(projectName)) {
             let projectId = projectIdList[projectLine].split(' ');
@@ -131,15 +127,13 @@ const initialize = async function(options) {
         await envvars(options).catch((e) => {});
 
         await domain(options); // Create domain mapping if flagged.
-
-        if (!options.dryrun) console.log(highlight('\ncrbt initialization complete!'));
-        else console.log(highlight('\ncrbt dry run complete!'));
     } else {
-        deploySubmit(options);
-        //console.log(highlight('\ncrbt initialization complete!\n'));
-        //console.log(warn('Since automated builds were not enabled, to perform deployment execute: ' + header('crbt deploy')));
-        //if (options.map) console.log(warn('Domain mapping is not supported without automatic builds, since the service must first be deployed.'));
+        if (!options.dryrun) await deploySubmit(options);
+        await domain(options); // Create domain mapping if flagged.
     }
+
+    if (!options.dryrun) console.log(highlight('\ncrbt initialization complete!'));
+    else console.log(highlight('\ncrbt dry run complete!'));
 };
 
 /**
@@ -172,10 +166,10 @@ function determinePlatform(options) {
                         name: 'platform',
                         prefix: questionPrefix,
                         message: 'Would you like to deploy to Cloud Run (managed) or Cloud Run on Anthos on Google Cloud (gke)?',
-                        choices: ['managed', 'gke']
-                    }
+                        choices: ['managed', 'gke'],
+                    },
                 ])
-                .then(async function(answers) {
+                .then(async function (answers) {
                     if (answers.platform === 'managed') {
                         options.platform = 'managed';
                         await saveConfig('platform', options.platform);
@@ -213,10 +207,10 @@ function determineGKECluster(options) {
                         type: 'input',
                         name: 'cluster',
                         prefix: questionPrefix,
-                        message: 'What is the name of the GKE Cluster to use?'
-                    }
+                        message: 'What is the name of the GKE Cluster to use?',
+                    },
                 ])
-                .then(async function(answers) {
+                .then(async function (answers) {
                     console.log(); // For spacing layout purposes.
                     options.cluster = answers.cluster;
                     await saveConfig('cluster', options.cluster);
@@ -249,10 +243,10 @@ function determineGKEZoneLocation(options) {
                         type: 'input',
                         name: 'clusterzone',
                         prefix: questionPrefix,
-                        message: 'What GCP zone does the GKE cluster reside within?'
-                    }
+                        message: 'What GCP zone does the GKE cluster reside within?',
+                    },
                 ])
-                .then(async function(answers) {
+                .then(async function (answers) {
                     console.log(); // For spacing layout purposes.
                     options.clusterzone = answers.clusterzone;
                     await saveConfig('clusterzone', options.clusterzone);
@@ -295,10 +289,10 @@ function determineBase(options) {
                         name: 'base',
                         prefix: questionPrefix,
                         message: 'Would you like to use a built-in template, local source within current directory, or clone an external Git repository?',
-                        choices: ['template', 'local', 'git']
-                    }
+                        choices: ['template', 'local', 'git'],
+                    },
                 ])
-                .then(async function(answers) {
+                .then(async function (answers) {
                     if (answers.base === 'template') await determineTemplate(options);
                     else if (answers.base === 'git') await determineSourceRepo(options);
                     else if (answers.base === 'local') options.local = '.';
@@ -332,10 +326,10 @@ function determineRegion(options) {
                         name: 'region',
                         prefix: questionPrefix,
                         message: 'Which region would you like to utilize?',
-                        choices: GCP_REGIONS
-                    }
+                        choices: GCP_REGIONS,
+                    },
                 ])
-                .then(async function(answers) {
+                .then(async function (answers) {
                     console.log(); // For spacing layout purposes.
                     options.region = answers.region;
                     await saveConfig('region', options.region);
@@ -365,10 +359,10 @@ function determineSourceRepo(options) {
                         type: 'input',
                         name: 'repo',
                         prefix: questionPrefix,
-                        message: 'What source repository would you like to use?'
-                    }
+                        message: 'What source repository would you like to use?',
+                    },
                 ])
-                .then(async function(answers) {
+                .then(async function (answers) {
                     options.sourcerepo = answers.repo;
                     if (!options.sourcerepo.includes('.git')) {
                         console.log(failure('Invalid source repository URL (' + varFmt(options.sourcerepo) + ') provided. Ensure the entire .git link is entered.'));
@@ -406,10 +400,10 @@ function determineTemplate(options) {
                         name: 'template',
                         prefix: questionPrefix,
                         message: 'What template would you like to use?',
-                        choices: templateList
-                    }
+                        choices: templateList,
+                    },
                 ])
-                .then(async function(answers) {
+                .then(async function (answers) {
                     options.template = answers.template;
                     console.log(success('Template selected: ' + varFmt(options.template) + '\n'));
                     return resolve();

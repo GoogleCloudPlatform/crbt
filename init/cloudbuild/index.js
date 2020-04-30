@@ -39,6 +39,7 @@ const cloudbuild = async (options) => {
         console.log(header('\n=== Cloud Build Setup\n'));
 
         await propogateCloudBuildConfig(options.name, options.region, options.platform, options.cluster, options.clusterzone);
+        setupCloudbuildIAM(options.platform, options.dryrun, options.verbose); // We use cloudbuild to run the deployment regardless of using a commit or not.
 
         // Check if customization specifies cloudbuild, if so then set it (but only check if it's not specified as an argument)
         if (options.build == undefined) {
@@ -49,7 +50,6 @@ const cloudbuild = async (options) => {
 
         if (options.build) {
             if (options.build == 'commit') {
-                setupCloudbuildIAM(options.platform, options.dryrun, options.verbose);
                 await enableTriggers(options.name, options.dryrun, options.verbose).catch((e) => {
                     console.log(failure('Fatal error. Recommend cleaning up with `crbt destroy`. Exiting...'));
                     process.exit(1);
@@ -72,14 +72,13 @@ const cloudbuild = async (options) => {
                     name: 'cloudbuild',
                     prefix: questionPrefix,
                     message: 'Do you want to setup a trigger with Cloud Build to automatically build and deploy the Cloud Run services on commit to Cloud Source Repository?',
-                    choices: ['Yes', 'No']
-                }
+                    choices: ['Yes', 'No'],
+                },
             ])
             .then(async (answers) => {
                 // It doesn't make sense to have a trigger for one service but not the others, so enable for all.
                 if (answers.cloudbuild == 'Yes') {
                     options.build = 'commit';
-                    setupCloudbuildIAM(options.platform, options.dryrun, options.verbose);
                     await enableTriggers(options.name, options.dryrun, options.verbose).catch((e) => {
                         console.log(failure('Fatal error. Recommend cleaning up with `crbt destroy`. Exiting...'));
                     });
@@ -137,14 +136,14 @@ async function propogateCloudBuildConfig(name, region, platform, clusterName, cl
  */
 async function copyTemplate(serviceName, destination, allowUnauthenticated, region) {
     return new Promise((resolve, reject) => {
-        ncp(path.resolve(__dirname, '../../templates/cloudbuild/cloudbuild.yaml'), destination + 'cloudbuild.yaml', function(err) {
+        ncp(path.resolve(__dirname, '../../templates/cloudbuild/cloudbuild.yaml'), destination + 'cloudbuild.yaml', function (err) {
             // Copy in template
             if (err) {
                 console.error('Error copying template: ' + err);
                 return reject();
             } else {
                 console.log(success('Copied template (' + varFmt('cloudbuild.yaml') + ') into `' + varFmt(destination) + '`.'));
-                fs.readFile(destination + 'cloudbuild.yaml', 'utf8', function(err, data) {
+                fs.readFile(destination + 'cloudbuild.yaml', 'utf8', function (err, data) {
                     // Update template
                     if (err) {
                         return reject();
@@ -156,7 +155,7 @@ async function copyTemplate(serviceName, destination, allowUnauthenticated, regi
                     if (allowUnauthenticated) result = result.replace(/authPlaceholder/g, '--allow-unauthenticated');
                     else result = result.replace(/authPlaceholder/g, '--no-allow-unauthenticated');
 
-                    fs.writeFile(destination + 'cloudbuild.yaml', result, 'utf8', function(err) {
+                    fs.writeFile(destination + 'cloudbuild.yaml', result, 'utf8', function (err) {
                         if (err) return reject();
                         console.log(success('Updated ' + varFmt('cloudbuild.yaml') + ' within `' + varFmt(destination) + '`.'));
                         return resolve();
@@ -176,14 +175,14 @@ async function copyTemplate(serviceName, destination, allowUnauthenticated, regi
  */
 async function copyGKETemplate(serviceName, destination, clusterName, clusterZone) {
     return new Promise((resolve, reject) => {
-        ncp(path.resolve(__dirname, '../../templates/cloudbuild/cloudbuild-gke.yaml'), destination + 'cloudbuild.yaml', function(err) {
+        ncp(path.resolve(__dirname, '../../templates/cloudbuild/cloudbuild-gke.yaml'), destination + 'cloudbuild.yaml', function (err) {
             // Copy in template
             if (err) {
                 console.error('Error copying template: ' + err);
                 return reject();
             } else {
                 console.log(success('Copied template (' + varFmt('cloudbuild.yaml') + ') into `' + varFmt(destination) + '`.'));
-                fs.readFile(destination + 'cloudbuild.yaml', 'utf8', function(err, data) {
+                fs.readFile(destination + 'cloudbuild.yaml', 'utf8', function (err, data) {
                     // Update template
                     if (err) {
                         return reject();
@@ -195,7 +194,7 @@ async function copyGKETemplate(serviceName, destination, clusterName, clusterZon
                     //if (allowUnauthenticated) result = result.replace(/authPlaceholder/g, '--allow-unauthenticated');
                     //else result = result.replace(/authPlaceholder/g, '--no-allow-unauthenticated');
 
-                    fs.writeFile(destination + 'cloudbuild.yaml', result, 'utf8', function(err) {
+                    fs.writeFile(destination + 'cloudbuild.yaml', result, 'utf8', function (err) {
                         if (err) return reject();
                         console.log(success('Updated ' + varFmt('cloudbuild.yaml') + ' within `' + varFmt(destination) + '`.'));
                         return resolve();
