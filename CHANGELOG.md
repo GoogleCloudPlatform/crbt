@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 -   Improved workflow when not using a Cloud Build trigger to allow for domain mapping.
 -   Resolved issue with --dry-run not being respected when not using a Cloud Build trigger.
+-   Fixed IAM permissions for Cloud Build when not using a trigger-based deployment.
 
 ## [0.1.3] - 2020-03-27
 
