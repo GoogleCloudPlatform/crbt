@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.5] - 2021-12-12
+
+### Fixed
+
+-   Fixed an issue with getting project ID when running inside Cloud Shell due to formatting change.
+
 ## [0.1.4] - 2020-04-30
 
 ### Fixed
