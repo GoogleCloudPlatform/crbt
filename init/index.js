@@ -102,10 +102,10 @@ const initialize = async function (options) {
 
     let projectName = spawn('gcloud', ['config', 'get-value', 'project']).stdout.toString('utf8').trim(); // Do this after csr or csr will fail due to directory not being empty.
     await saveConfig('project', 'name', projectName);
-    let projectIdList = spawn('gcloud', ['projects', 'list']).stdout.toString('utf8').split('\n');
+    let projectIdList = spawn('gcloud', ['projects', 'list', '--format', 'value(project_id,name,project_number)']).stdout.toString('utf8').split('\n');
     for (let projectLine in projectIdList) {
         if (projectIdList[projectLine].includes(projectName)) {
-            let projectId = projectIdList[projectLine].split(' ');
+            let projectId = projectIdList[projectLine].split('\t');
             projectId = projectId[projectId.length - 1];
             await saveConfig('project', 'id', projectId);
         }

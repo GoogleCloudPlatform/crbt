@@ -1,6 +1,6 @@
 {
     "name": "crbt",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "description": "(C)loud (R)un (B)ootstrap (T)ool",
     "main": "index.js",
     "bin": {
