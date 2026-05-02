@@ -30,6 +30,6 @@
         "prettyjson": "^1.2.1"
     },
     "devDependencies": {
-        "pkg": "^4.4.4"
+        "pkg": "^5.8.1"
     }
 }
